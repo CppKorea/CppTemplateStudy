@@ -27,63 +27,63 @@
     - 스터디 진행 안내
     - 조 편성
     - 발표 순서 결정
-- 1월 20일
+- 1월 20일 (발표자 : 남정호)
     - Chatper 1: Function Templates
     - Chapter 2: Class Templates
 - 1월 27일
     - 휴식
-- 2월 3일
+- 2월 3일 (발표자 : 정승호)
     - Chapter 3: Nontype Template Parameters
     - Chapter 4: Variadic Templates
-- 2월 10일
+- 2월 10일 (발표자 : 강인철)
     - Chapter 5: Tricky Basics
     - Chapter 6: Move Semantics and ```enable_if<>```
 - 2월 17일
     - 휴식 (설날 연휴)
-- 2월 24일
+- 2월 24일 (발표자 : 옥찬호)
     - Chapter 7: By Value or by Reference?
     - Chapter 8: Compile-Time Programming
-- 3월 3일
+- 3월 3일 (발표자 : 배일섭)
     - Chapter 9: Using Templates in Practice
     - Chapter 10: Basic Template Terminology
     - Chapter 11: Generic Libraries
-- 3월 10일
+- 3월 10일 (발표자 : 김은재)
     - Chapter 12: Fundamentals in Depth
 - 3월 17일
     - 휴식
-- 3월 24일
+- 3월 24일 (발표자 : 박동하)
     - Chapter 13: Names in Templates
     - Chapter 14: Instantiation
-- 3월 31일
+- 3월 31일 (발표자 : Daniel)
     - Chapter 15: Template Argument Deduction
-- 4월 7일
+- 4월 7일 (발표자 : 최두선)
     - Chapter 16: Specialization and Overloading
     - Chapter 17: Future Directions
 - 4월 14일
     - 휴식
-- 4월 21일
+- 4월 21일 (발표자 : 정종채)
     - Chapter 18: The Polymorphic Power of Templates
     - Chapter 19: Implementing Traits
-- 4월 28일
+- 4월 28일 (발표차 : 유원상)
     - Chapter 19: Implementing Traits
 - 5월 5일
     - 휴식
-- 5월 12일
+- 5월 12일 (발표자 : 정은아)
     - Chapter 20: Overloading on Type Properties
     - Chapter 21: Templates and Inheritance
-- 5월 19일
+- 5월 19일 (발표자 : 정은식)
     - Chapter 22: Bridging Static and Dynamic Polymorphism
     - Chapter 23: Metaprogramming
-- 5월 26일
+- 5월 26일 (발표자 : 정원혁)
     - Chapter 24: Typelists
 - 6월 2일
     - 휴식
-- 6월 9일
+- 6월 9일 (발표자 : 옥찬호)
     - Chapter 25: Tuples
-- 6월 16일
+- 6월 16일 (발표자 : 남정호)
     - Chapter 26: Discriminated Unions
     - Chapter 27: Expression Templates
-- 6월 23일
+- 6월 23일 (발표자 : 옥찬호)
     - Chapter 28: Debugging Templates, Appendixes
     - Appendix A: The One-Definition Rule
     - Appendix B: Value Categories
