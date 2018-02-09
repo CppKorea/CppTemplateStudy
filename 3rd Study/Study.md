@@ -176,6 +176,132 @@ public:
 
 ## 5.4 Templates for Raw Arrays and String Literals
 
+배열이나 문자열 리터럴을 템플릿으로 전달할 때는 주의해야 합니다.
+
+- 템플릿 매개 변수가 레퍼런스로 선언되어 있다면, 인수는 붕괴되지 않습니다. 즉, ```"hello"```를 인수로 전달하면 타입은 ```char const[6]```이 됩니다. 하지만 타입이 다르기 때문에 길이가 다른 배열이나 문자열 리터럴을 전달하면 문제가 발생할 수 있습니다.
+
+- 값을 통해 인수를 전달할 때는 타입이 붕괴됩니다. 따라서 문자열 리터럴은 ```char const*``` 타입으로 변환됩니다.
+
+우리는 배열이나 문자열 리터럴을 처리하는 템플릿을 만들 수 있습니다.
+
+```C++
+template <typename T, int N, int M>
+bool less(T(&a)[N], T(&b)[M])
+{
+    for (int i = 0; i < N && i < M; ++i)
+    {
+        if (a[i] < b[i]) return true;
+        if (b[i] < a[i]) return false;
+    }
+    return N < M;
+}
+```
+
+다음처럼 배열을 템플릿으로 전달할 때,
+
+```C++
+int x[] = {1, 2, 3};
+int y[] = {1, 2, 3, 4, 5};
+std::cout << less(x, y) << '\n';
+```
+
+```less<>()```는 ```T```는 ```int```, ```N```은 ```3```, ```M```은 ```5```로 인스턴스화됩니다.
+
+문자열 리터럴을 템플릿으로 전달할 수도 있습니다.
+
+```C++
+std::cout << less("ab", "abc") << '\n';
+```
+
+이 경우, ```less<>()```는 ```T```는 ```char const```, ```N```은 ```3```, ```M```은 ```4```로 인스턴스화됩니다.
+
+문자열 리터럴(그리고 ```char``` 배열)만 처리하는 템플릿 만들고 싶다면, 다음처럼 하면 됩니다.
+
+```C++
+template <int N, int M>
+bool less(char const(&a)[N], char const(&b)[M])
+{
+    for (int i = 0; i < N && i < M; ++i)
+    {
+        if (a[i] < b[i]) return true;
+        if (b[i] < a[i]) return false;
+    }
+    return N < M;
+}
+```
+
+범위를 알 수 없는 배열을 오버로드하거나 부분 특수화할 수도 있습니다.
+
+```C++
+#include <iostream>
+
+template <typename T>
+struct MyClass;
+
+template <typename T, std::size_t SZ>
+struct MyClass<T[SZ]>
+{
+    static void print() { std::cout << "print() for T[" << SZ << "]\n"; }
+}
+
+template <typename T, std::size_t SZ>
+struct MyClass<T(&)[SZ]>
+{
+    static void print() { std::cout << "print() for T(&)[" << SZ << "]\n"; }
+}
+
+template <typename T>
+struct MyClass<T[]>
+{
+    static void print() { std::cout << "print() for T[]\n"; }
+}
+
+template <typename T>
+struct MyClass<T(&)[]>
+{
+    static void print() { std::cout << "print() for T(&)[]\n"; }
+}
+
+template <typename T>
+struct MyClass<T*>
+{
+    static void print() { std::cout << "print() for T*\n"; }
+}
+```
+
+이제 다양한 타입을 사용해 호출하는 예제를 살펴봅시다.
+
+```C++
+#include "arrays.hpp"
+
+template <typename T1, typename T2, typename T3>
+void foo(int a1[7], int a2[], int (&a3)[42], int (&x0)[], T1 x1, T2& x2, T3&& x3)
+{
+    MyClass<decltype(a1)>::print();
+    MyClass<decltype(a2)>::print();
+    MyClass<decltype(a3)>::print();
+    MyClass<decltype(x0)>::print();
+    MyClass<decltype(x1)>::print();
+    MyClass<decltype(x2)>::print();
+    MyClass<decltype(x3)>::print();
+}
+
+int main()
+{
+    int a[42];
+    MyClass<decltype(a)>::print();
+
+    extern int x[];
+    MyClass<decltype(x)>::print();
+
+    foo(a, a, a, x, x, x, x);
+}
+
+int x[] = {0, 8, 16};
+```
+
+참고로 언어 규칙에 의해 (길이 존재 여부와 관계 없이) 배열로 선언된 <b>호출 매개 변수(Call Parameter)</b>의 타입은 포인터 타입입니다.
+
 ## 5.5 Member Templates
 
 ### 5.5.1 The ```.template``` Construct
