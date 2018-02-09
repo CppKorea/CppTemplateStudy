@@ -145,6 +145,35 @@ void foo(T p = T{})
 
 ## 5.3 using ```this->```
 
+템플릿 매개 변수에 의존하는 클래스 템플릿이 베이스 클래스를 갖고 있다고 가정합시다.
+
+```x```라는 이름을 사용했을 때, 멤버 ```x```를 상속받았더라도 항상 ```this->x```와 같지는 않습니다.
+
+```C++
+template <typename T>
+class Base
+{
+public:
+    void bar();
+};
+
+template <typename T>
+class Derived : Base<T>
+{
+public:
+    void foo()
+    {
+        bar();
+    }
+};
+```
+
+이 예제에서 ```foo()``` 안에 있는 ```bar```라는 심볼을 해석할 때 ```Base```에 정의되어 있는 ```bar()```는 전혀 고려하지 않습니다.
+
+따라서 오류가 발생하거나 다른 ```bar()```(예를 들어, 전역 함수인 ```bar()```)를 호출합니다.
+
+이 문제를 해결하기 위해서는 심볼을 ```this->```나 ```Base<T>::```로 한정해야 합니다.
+
 ## 5.4 Templates for Raw Arrays and String Literals
 
 ## 5.5 Member Templates
