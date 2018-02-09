@@ -580,6 +580,143 @@ public:
 
 ## 5.6 Variable Templates
 
+C++14부터는 특정 타입을 통해 변수도 매개 변수화 할 수 있습니다. 이를 <b>변수 템플릿(Variable Template)</b>이라고 합니다.
+
+예를 들어, 원주율의 값은 정의하지만 타입은 아직 정의하지 않은 변수를 사용할 수 있습니다.
+
+```C++
+template <typename T>
+constexpr T pi{3.141592};
+```
+
+변수 템플릿을 사용하기 위해서는 타입을 지정해야 합니다.
+
+```C++
+std::cout << pi<double> << '\n';
+std::cout << pi<float << '\n';
+```
+
+변수 템플릿을 선언해 서로 다른 번역 단위에서도 사용할 수 있습니다.
+
+```C++
+// header.hpp
+template <typename T> T val{};
+
+// Translation unit 1
+#include "header.hpp"
+
+int main()
+{
+    val<long> = 42;
+    print();
+}
+
+// Translation unit 2
+#include "header.hpp"
+
+void print()
+{
+    std::cout << val<long> << '\n';
+}
+```
+
+변수 템플릿은 디폴트 템플릿 인수를 가질 수 있습니다.
+
+```C++
+template <typename T = long double>
+constexpr T pi = T{3.141592};
+```
+
+이러면 디폴트 타입이나 다른 타입으로 사용할 수 있습니다.
+
+```C++
+std::cout << pi<> << '\n';
+std::cout << pi<float> << '\n';
+```
+
+하지만 항상 ```<>```을 사용해야 합니다. 그렇지 않으면 오류가 발생합니다.
+
+```C++
+std::cout << pi << '\n';
+```
+
+변수 템플릿은 타입이 아닌 매개 변수를 통해 매개 변수화 할 수도 있습니다.
+
+```C++
+#include <iostream>
+#include <array>
+
+template <int N>
+std::array<int, N> arr{};
+
+template <auto N>
+constexpr decltype(N) dval = N;
+
+int main()
+{
+    std::cout << dval<'c'> << '\n';
+    arr<10>[0] = 42;
+    for (std::size_t i = 0; i < arr<10>.size(); ++i)
+    {
+        std::cout << arr<10>[i] << '\n';
+    }
+}
+```
+
+#### 데이터 멤버를 위한 변수 템플릿
+
+변수 템플릿을 클래스 템플릿의 멤버 변수에 사용할 수 있습니다.
+
+```C++
+template <typename T>
+class MyClass
+{
+public:
+    static constexpr int max = 1000;
+};
+```
+
+이렇게 하면 ```MyClass<>```의 특수화에 따라 다른 값을 정의할 수 있습니다.
+
+```C++
+template <typename T>
+int myMax = MyClass<T>::max;
+```
+
+이제 프로그래머는
+
+```C++
+auto i = MyClass<std::string>::max;
+```
+
+대신
+
+```C++
+auto i = myMax<std::string>;
+```
+
+으로 사용할 수 있습니다.
+
+#### 타입 특성 접미사 _v
+
+표준 라이브러리는 C++17부터 표준 라이브러리에서 값을 산출하는 모든 타입 특성에 대해,
+
+편하게 사용할 수 있는 방법을 정의하는 변수 템플릿 기법을 사용합니다.
+
+예를 들어, 프로그래머는
+
+```C++
+std::is_const<T>::value
+```
+
+대신
+
+```C++
+std::is_const_v<T>;
+```
+
+으로 사용할 수 있습니다.
+
 ## 5.7 Template Template Parameters
 
 # Chapter 6: Move Semantics and ```enable_if<>```
