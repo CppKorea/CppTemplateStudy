@@ -719,14 +719,170 @@ std::is_const_v<T>;
 
 ## 5.7 Template Template Parameters
 
-# Chapter 6: Move Semantics and ```enable_if<>```
+스택 예제에서 내부 컨테이너를 다른 컨테이너로 사용하고 싶다면, 요소 타입을 두 번 지정해야 합니다.
 
-## 6.1 Perfect Forwarding
+따라서, 컨테이너의 타입과 요소의 타입을 전달해야 합니다.
 
-## 6.2 Special Member Function Templates
+```C++
+Stack<int, std::vector<int>> vStack;
+```
 
-## 6.3 Disable Templates with ```enable_if<>```
+템플릿 템플릿 매개 변수를 사용하면 요소의 타입 없이 컨테이너의 타입을 지정해 Stack 클래스 템플릿을 선언할 수 있습니다.
 
-## 6.4 Using ```enable_if<>```
+```C++
+Stack<int, std::vector> vStack;
+```
 
-## 6.5 Using Concepts to Simplify ```enable_if<>``` Expressions
+이렇게 선언하려면 두번쨰 템플릿 매개 변수를 템플릿 템플릿 매개 변수로 지정해야 합니다.
+
+```C++
+template <typename T, template <typename Elem> class Cont = std::deque>
+class Stack
+{
+public:
+    void push(T const&);
+    void pop();
+    T const& top() const;
+    bool empty() const
+    {
+        return elems.empty();
+    }
+
+    template <typename T2>
+    Stack& operator=(Stack<T2> const&);
+
+private:
+    Cont<T> elems;
+};
+```
+
+이전과 차이점이 있다면 두번째 매개 변수를 클래스 템플릿으로 선언했다는 점입니다.
+
+```C++
+template <typename Elem> class Cont
+```
+
+템플릿 템플릿 매개 변수의 템플릿 매개 변수를 사용하지 않는다면, 이름을 생략할 수 있습니다.
+
+```C++
+template <typename T, template <typename> class Cont = std::deque>
+class Stack
+{
+    ...
+};
+```
+
+멤버 함수도 수정해야 합니다.
+
+```C++
+template <typename T, template <typename> class Cont>
+void Stack<T, Cont>::push(T const& elem)
+{
+    elems.push_back(elem);
+}
+```
+
+#### 템플릿 템플릿 인수 매칭
+
+```C++
+#include <deque>
+#include <cassert>
+#include <memory>
+
+template <typename T, template <typename Elem, typename = std::allocator<Elem>> class Cont = std::deque>
+class Stack
+{
+public:
+    void push(T const&);
+    void pop();
+    T const& top() const;
+    bool empty() const
+    {
+        return elems.empty();
+    }
+
+    template <typename T2, template <typename Elem2, typename = std::allocator<Elem2>> class Cont2>
+    Stack<T, Cont>& operator=(Stack<T2, Cont2> const&);
+
+    template <typename, template <typename, typename> class>
+    friend class Stack;
+
+private:
+    Cont<T> elems;
+};
+
+template <typename T, template <typename, typename> class Cont>
+void Stack<T, Cont>::push(T const& elem)
+{
+    elems.push_back(elem);
+}
+
+template <typename T, template <typename, typename> class Cont>
+T const& Stack<T, Cont>::top() const
+{
+    assert(!elems.empty());
+    return elems.back();
+}
+
+template <typename T, template <typename, typename> class Cont>
+template <typename T2, template <typename, typename> class Cont2>
+Stack<T, Cont>& Stack<T, Cont>::operator=(Stack<T2, Cont2> const& op2)
+{
+    elems.clear();
+    elems.insert(elems.begin(), op2.elems.begin(), op2.elems.end());
+    return *this;
+}
+```
+
+참고로 ```Cont``` 매개 변수에 모든 표준 컨테이너를 사용할 수는 없습니다.
+
+예를 들어, ```std::array```는 템플릿 템플릿 매개 변수 선언에 일치하지 않는 템플릿 매개 변수를 포함하고 있으므로 사용할 수 없습니다.
+
+이제 잘 동작하는지 확인해 봅시다.
+
+```C++
+#include "stack9.hpp"
+#include <iostream>
+#include <vector>
+
+int main()
+{
+    Stack<int> iStack;
+    Stack<float> fStack;
+
+    iStack.push(1);
+    iStack.push(2);
+    std::cout << "iStack.top(): " << iStack.top() << '\n';
+
+    fStack.push(3.3);
+    std::cout << "fStack.top(): " << fStack.top() << '\n';
+
+    fStack = iStack;
+    fStack.push(4.4);
+    std::cout << "fStack.top(): " << fStack.top() << '\n';
+
+    Stack<double, std::vector> vStack;
+    vStack.push(5.5);
+    vStack.push(6.6);
+    std::cout << "vStack.top(): " << vStack.top() << '\n';
+
+    vStack = fStack;
+    std::cout << "vStack: ";
+    while (!vStack.empty())
+    {
+        std::cout << vStack.top() << ' ';
+        vStack.pop();
+    }
+    std::cout << '\n';
+}
+```
+
+프로그램의 출력 결과는 다음과 같습니다.
+
+```
+iStack.top(): 2
+fStack.top(): 3.3
+fStack.top(): 4.4
+vStack.top(): 6.6
+vStack: 4.4 2 1
+```
