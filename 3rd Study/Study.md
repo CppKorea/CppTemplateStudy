@@ -784,6 +784,28 @@ void Stack<T, Cont>::push(T const& elem)
 
 #### 템플릿 템플릿 인수 매칭
 
+C++17 이전 표준은 템플릿 템플릿 매개 변수가 추론하는 템플릿 템플릿 매개 변수의 매개 변수와 정확하게 일치하는 템플릿이어야 합니다.
+
+템플릿 템플릿 인수의 디폴트 템플릿 인수를 고려하지 않았기 때문에, 디폴트 값을 갖는 인수로는 일치할 수 없습니다.
+
+C++17에서는 디폴트 인수를 고려합니다.
+
+따라서 C++17 이전 표준 라이브러리의 ```std::deque``` 템플릿은 두 개 이상의 매개 변수를 갖고 있기에 문제가 됩니다.
+
+두번째 매개 변수(```allocator```)는 디폴트 값을 갖지만, C++17 이전 표준은 ```std::deque```를 ```Cont``` 매개 변수에 일치할 때 고려하지 않습니다.
+
+그러나 ```Cont``` 매개 변수가 두 개의 템플릿 매개 변수를 갖는다고 클래스 선언을 재작성하면 C++17 이전 표준에서도 동작합니다.
+
+```C++
+template <typename T, template <typename Elem, typename Alloc = std::allocator<Elem>> class Cont = std::deque>
+class Stack
+{
+    ...
+    
+private:
+    Cont<T> elems;
+}
+
 ```C++
 #include <deque>
 #include <cassert>
