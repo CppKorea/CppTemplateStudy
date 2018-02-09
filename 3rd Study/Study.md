@@ -304,9 +304,279 @@ int x[] = {0, 8, 16};
 
 ## 5.5 Member Templates
 
+```Stack<>``` 클래스 템플릿으로 멤버 템플릿의 장점을 살펴보도록 합시다.
+
+일반적으로 두 스택의 타입이 같을 때만 스택을 할당할 수 있습니다.
+
+두 스택의 타입이 서로 다르다면, 암시적 타입 변환을 통해 변환이 가능하더라도 할당할 수 없습니다.
+
+```C++
+Stack<int> intStack1, intStack2;
+Stack<float> floatStack;
+...
+intStack1 = intStack2;
+floatStack = intStack1;
+```
+
+디폴트 할당 연산자는 할당 연산자의 양변이 모두 같은 타입이어야 한다고 요구합니다.
+
+하지만 할당 연산자를 템플릿으로 정의하면 적절한 타입 변환을 통해 스택에 할당할 수 있도록 만들 수 있습니다.
+
+```C++
+template <typename T>
+class Stack
+{
+public:
+    void push(T const&);
+    void pop();
+    T const& top() const;
+    bool empty() const
+    {
+        return elems.empty();
+    }
+
+    template <typename T2>
+    Stack& operator=(Stack<T2> const&);
+
+private:
+    std::deque<T> elems;
+};
+```
+
+새 할당 연산자는 다음과 같이 구현합니다.
+
+```C++
+template <typename T>
+template <typename T2>
+Stack<T>& Stack<T>::operator=(Stack<T2> const& op2)
+{
+    Stack<T2> tmp(op2);
+
+    elems.clear();
+    while (!tmp.empty())
+    {
+        elems.push_front(tmp.top());
+        tmp.pop();
+    }
+    return *this;
+}
+```
+
+```operator=```의 두 스택이 서로 다른 타입을 갖고 있으므로, ```public``` 인터페이스만 사용할 수 있습니다.
+
+```op2```의 모든 멤버에 접근하고 싶다면, ```friend```로 만들어주면 됩니다.
+
+```C++
+template <typename T>
+class Stack
+{
+public:
+    void push(T const&);
+    void pop();
+    T const& top() const;
+    bool empty() const
+    {
+        return elems.empty();
+    }
+
+    template <typename T2>
+    Stack& operator=(Stack<T2> const&);
+
+    template <typename> friend class Stack;
+
+private:
+    std::deque<T> elems;
+};
+```
+
+템플릿 매개 변수의 이름을 사용하지 않는 경우 생략할 수 있습니다.
+
+이제 템플릿 할당 연산자를 다음과 같이 구현할 수 있습니다.
+
+```C++
+template <typename T>
+template <typename T2>
+Stack<T>& Stack<T>::operator=(Stack<T2> const& op2)
+{
+    elems.clear();
+    elems.insert(elems.begin(), op2.elems.begin(), op2.elems.end());
+    return *this;
+}
+```
+
+이제 ```int``` 타입의 스택을 ```float``` 타입의 스택에 할당할 수 있습니다.
+
+```C++
+Stack<int> intStack;
+Stack<float> floatStack;
+...
+floatStack = intStack;
+```
+
+내부 컨테이너 타입을 매개 변수화하기 위해 코드를 변경해 봅시다.
+
+```C++
+template <typename T, typename Cont = std::deque<T>>
+class Stack
+{
+public:
+    void push(T const&);
+    void pop();
+    T const& top() const;
+    bool empty() const
+    {
+        return elems.empty();
+    }
+
+    template <typename T2, typename Cont2>
+    Stack& operator=(Stack<T2, Cont2> const&);
+
+    template <typename, typename> friend class Stack;
+
+private:
+    Cont elems;
+};
+```
+
+템플릿 할당 연산자의 코드도 변경합니다.
+
+```C++
+template <typename T, typename Cont>
+template <typename T2, typename Cont2>
+Stack<T, Cont>& Stack<T, Cont>::operator=(Stack<T2, Cont2> const& op2)
+{
+    elems.clear();
+    elems.insert(elems.begin(), op2.elems.begin(), op2.elems.end());
+    return *this;
+}
+```
+
+클래스 템플릿은 호출하는 멤버 함수만 인스턴스화합니다.
+
+따라서 다른 타입을 갖는 스택을 할당하지 않는다면, 벡터를 내부 컨테이너를 사용해도 오류가 발생하지 않습니다.
+
+```C++
+Stack<int, std::vector<int>> vStack;
+...
+vStack.push(42);
+vStack.push(7);
+std::cout << vStack.top() << '\n';
+```
+
+할당 연산자 템플릿이 필요없기 때문에, ```push_front()``` 멤버 함수가 없다는 오류 메시지를 출력하지 않습니다.
+
+#### 멤버 함수 템플릿의 특수화
+
+멤버 함수 템플릿은 부분 및 전체 특수화도 할 수 있습니다.
+
+예를 들어, 다음과 같은 클래스가 있다고 합시다.
+
+```C++
+class BoolString
+{
+public:
+    BoolString(std::String const& s) : value(s) { }
+    
+    template <typename T = std::String>
+    T get() const
+    {
+        return value;
+    }
+
+private:
+    std::string value;
+}
+```
+
+멤버 함수 템플릿인 ```get()```에 전체 특수화를 적용해 봅시다.
+
+```C++
+template<>
+inline bool BoolString::get<bool>() const
+{
+    return value == "true" || value == "1" || value == "on";
+}
+```
+
+전체 특수화는 선언만 할 수 없으며, 헤더 파일에 정의해야 합니다.
+
+```C++
+std::cout << std::boolalpha;
+BoolString s1("hello");
+std::cout << s1.get() << '\n';
+std::cout << s1.get<bool>() << '\n';
+BoolString s2("on");
+std::cout << s2.get<bool>() << '\n';
+```
+
+#### 특별한 멤버 함수 템플릿
+
+템플릿 멤버 함수는 특별한 멤버 함수가 개체를 복사 또는 이동할 수 있도록 허용한 곳에서 사용할 수 있습니다.
+
+복사 할당 연산자 뿐만 아니라 생성자도 구현할 수 있습니다.
+
+하지만 템플릿 생성자나 템플릿 할당 연산자가 미리 정의된 생성자나 할당 연산자를 대체하진 않습니다.
+
+멤버 템플릿은 개체를 복사 또는 이동하는 특별한 멤버 함수로 고려하지 않습니다.
+
+따라서 같은 타입을 갖는 스택을 할당한다면 디폴트 할당 연산자를 호출합니다.
+
+- 장점 : 템플릿 생성자나 할당 연산자가 미리 정의된 복사/이동 생성자나 할당 연산자보다 더 잘맞는 경우가 있습니다.
+
+- 단점 : 복사/이동 생성자를 "템플릿화"하기 쉽지 않습니다.
+
 ### 5.5.1 The ```.template``` Construct
 
+멤버 템플릿을 호출할 때 템플릿 인수를 명시적으로 한정해야 하는 경우가 있습니다.
+
+이 때, ```<```이 템플릿 인수 목록의 시작 부분이라고 보장하는 ```template``` 키워드를 사용해야 합니다.
+
+```C++
+template <unsigned long N>
+void printBitset(std::bitset<N> const& bs)
+{
+    std::cout << bs.template to_string<char, std::char_traits<char>, std::allocator<char>>();
+}
+```
+
+```bs```는 멤버 함수 템플릿 ```to_string()```을 호출합니다.
+
+만약 ```.template```을 사용하지 않는다면, 컴파일러는 실제로 ```<```이 작다가 아니라 템플릿 인수 목록의 시작 부분이라고 판단하지 못합니다.
+
+이 문제는 매개 변수가 템플릿 매개 변수에 의존하는 경우에만 발생합니다.
+
+예제에서는 매개 변수 ```bs```가 템플릿 매개 변수 ```N```에 의존합니다.
+
+이러한 문제가 발생했을 경우에만 ```.template``` 표기법을 사용하기 바랍니다.
+
 ### 5.5.2 Generic Lambdas and Member Templates
+
+C++14에 도입된 제네릭 람다는 멤버 템플릿을 편하게 사용하는 방법입니다.
+
+임의의 타입을 갖는 두 인수의 합을 구하는 간단한 람다가 있다고 합시다.
+
+```C++
+[](auto x, auto y)
+{
+    return x + y;
+}
+```
+
+이 람다식을 다음 클래스의 디폴트 생성된 개체에 편하게 사용할 수 있습니다.
+
+```C++
+class SomeCompilerSpecificName
+{
+public:
+    SomeCompilerSpecificName();
+
+    template <typename T1, typename T2>
+    auto operator()(T1 x, T2 y) const
+    {
+        return x + y;
+    }
+};
+```
 
 ## 5.6 Variable Templates
 
