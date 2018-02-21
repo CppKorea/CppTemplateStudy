@@ -297,3 +297,106 @@ Person(STR&& n)
 우리가 정말로 원하는 건 ```Person``` 타입을 인수로 전달하거나 표현식이 ```Person```으로 변환될 수 있는 경우를 막는 것입니다.
 
 ```std::enable_if<>```를 사용하면 이 문제를 해결할 수 있습니다.
+
+## 6.3 Disable Templates with ```enable_if<>```
+
+C++11의 표준 라이브러리는 컴파일 타임의 특정 조건에서 함수 템플릿을 무시하는 헬퍼 템플릿 ```std::enable_if<>```를 제공합니다.
+
+예를 들어, 함수 템플릿 ```foo<>()```이 있다고 합시다.
+
+```C++
+template <typename T>
+typename std::enable_if<(sizeof(T) > 4)>::type
+foo() 
+{
+
+}
+
+만약 ```sizeof(T) > 4```가 ```false```라면, ```foo<>()```의 정의는 무시됩니다.
+
+만약 ```sizeof(T) > 4```가 ```true```라면, 함수 템플릿 인스턴스는 다음과 같이 확장합니다.
+
+```C++
+void foo()
+{
+
+}
+```
+
+즉, ```std::enable_if<>```는 첫번째 템플릿 인수로 주어진 컴파일 타임 표현식을 계산하는 타입 특성입니다.
+
+이 때 표현식의 결과에 따라 다음과 같이 동작합니다.
+
+- 표현식의 결과가 ```true```라면, ```std::enable_if<>```의 멤버 ```type```은
+    - 두번째 템플릿 인수를 전달하지 않았다면, ```void``` 타입이 됩니다.
+    - 전달했다면, 두번째 템플릿 인수 타입이 됩니다.
+- 표현식의 결과가 ```false```라면, ```std::enable_if<>```의 멤버 ```type```은 정의되지 않습니다.
+    - <b>SFINAE(Substitution Failure Is Not An Error)</b>라는 템플릿 특성 때문에 무시됩니다.
+
+C++14부터는 별칭 템플릿 ```std::enable_if_t<>```이 추가되어 ```typename```과 ```::type```을 생략할 수 있습니다.
+
+```C++
+template <typename T>
+std::enable_if_t<(sizeof(T) > 4)>
+foo()
+{
+
+}
+```
+
+```enable_if<>```나 ```enable_if_t<>```에 두번째 인자를 전달할 수 있습니다.
+
+```C++
+template <typename T>
+std::enable_if_t<(sizeof(T) > 4)>
+foo()
+{
+    return T();
+}
+```
+
+만약 ```size(T) > 4```가 ```true```이고 ```T```가 ```MyType()```이었다면, 위 함수 템플릿은
+
+```C++
+MyType foo();
+```
+
+로 인스턴스화됩니다.
+
+```enable_if``` 표현식이 선언 중간에 있어서 보기에 껄끄럽다면, 디폴트 값을 갖는 함수 템플릿 인수를 사용하면 됩니다.
+
+```C++
+template <typename T,
+          typename = std::enable_if_t<(sizeof(T) > 4)>>
+void foo()
+{
+
+}
+```
+
+```sizeof(T) > 4```라면, 위 함수 템플릿은
+
+```C++
+template <typename T,
+          typename = void>
+void foo()
+{
+
+}
+```
+
+로 확장합니다.
+
+여전히 껄끄럽다면, 별칭 템플릿을 사용해 요구 사항이나 제약 사항을 더욱 명시적으로 표현할 수 있습니다.
+
+```C++
+template <typename T>
+using EnableIfSizeGreater4 = std::enable_if_t<(sizeof(T) > 4)>;
+
+template <typename T,
+          typename = EnableIfSizeGreater4<T>>
+void foo()
+{
+
+}
+```
