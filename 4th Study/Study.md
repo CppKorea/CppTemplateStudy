@@ -400,3 +400,112 @@ void foo()
 
 }
 ```
+
+## 6.4 Using ```enable_if<>```
+
+6.2절에서 ```std::enable_if<>```를 사용해 문제를 해결할 수 있다고 말했었습니다.
+
+전달된 인수 ```STR```이 올바른 타입(```std::string```이거나 ```std::string``` 타입으로 변환됨)을 갖지 않을 경우 템플릿 생성자의 선언을 막아야 합니다.
+
+이를 위해, 다른 표준 타입 특성인 ```std::is_convertible<FROM, TO>```를 사용합니다.
+
+C++17이라면 다음과 같이 선언할 수 있습니다.
+
+```C++
+template <typename STR,
+          typename = std::enable_if_t<std::is_convertible_v<STR, std::string>>>
+Person(STR&& n);
+```
+
+만약 ```STR``` 타입을 ```std::string``` 타입으로 변환할 수 있다면, 함수 템플릿은
+
+```C++
+template <typename STR,
+          typename = void>
+Person(STR&& n);
+```
+
+으로 확장합니다.
+
+만약 ```STR``` 타입을 ```std::string``` 타입으로 변화할 수 없다면, 함수 템플릿은 무시됩니다.
+
+별칭 템플릿을 사용해 제약 사항을 더욱 명시적으로 표현할 수 있습니다.
+
+```C++
+template <typename T>
+using EnableIfString = std::enable_if_t<std::is_convertible_v<T, std::string>>;
+...
+template <typename STR, typename = EnableIfString<STR>>
+Person(STR&& n);
+```
+
+이를 적용한 ```Person``` 클래스 코드는 다음과 같습니다.
+
+```C++
+#include <utility>
+#include <string>
+#include <iostream>
+#include <type_traits>
+
+template <typename T>
+using EnableIfString = std::enable_if_t<std::is_convertible_v<T, std::string>>;
+
+class Person
+{
+public:
+    template <typename STR, typename = EnableIfString<STR>>
+    explicit Person(STR&& n) : name(std::forward<STR>(n))
+    {
+        std::cout << "TMPL-CONSTR for '" << name << "'\n";
+    }
+
+    Person(Person const& p) : name(p.name)
+    {
+        std::cout << "COPY-CONSTR Person '" << name << "'\n";
+    }
+
+    Person(Person&& p) : name(std::move(p.name))
+    {
+        std::cout << "MOVE-CONSTR Person '" << name << "'\n";
+    }
+
+private:
+    std::string name;
+};
+```
+
+이제 모든 코드가 예상한 대로 동작합니다.
+
+```C++
+std::string s = "sname";
+
+Person p1(s);
+Person p2("tmp");
+Person p3(p1);
+Person p4(std::move(p1));
+```
+
+C++14라면 값을 나타내는 타입 특성인 ```_v```가 정의되어 있지 않기 때문에 별칭 템플릿을 선언해야 합니다.
+
+```C++
+template <typename T>
+using EnableIfString = std::enable_if_t<std::is_convertible<T, std::string>::value>;
+```
+
+C++11이라면 타입을 나타내는 타입 특성인 ```_t```가 정의되어 있지 않기 떄문에 특별한 멤버 템플릿을 선언해야 합니다.
+
+```C++
+template <typename T>
+using EnableIfString = std::enable_if<std::is_convertible<T, std::string>::value>::type;
+```
+
+참고로 ```std::is_convertible<>```은 타입이 암시적으로 변환 가능해야 한다는 조건이 있습니다.
+
+대체 가능한 타입 특성으로 ```std::is_constructible<>```이 있습니다. 이 타입 특성은 초기화에 사용하는 명시적 변환도 허용합니다.
+
+두 타입 특성의 차이가 있다면, 인수의 순서가 서로 반대라는 점입니다.
+
+```C++
+template <typename T>
+using EnableIfString = std::enable_if_t<std::is_constructible_v<std::string, T>>;
+```
