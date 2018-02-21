@@ -159,3 +159,141 @@ int main()
 ```
 
 퍼펙트 포워딩은 가변 템플릿과 함께 사용할 수 있습니다.
+
+## 6.2 Special Member Function Template
+
+생성자와 같은 특별한 멤버 함수에도 멤버 함수 템플릿을 사용할 수 있습니다. 하지만 예상한 것과 다른 동작을 합니다.
+
+예를 들어, 다음과 같은 코드가 있다고 합시다.
+
+```C++
+#include <utility>
+#include <string>
+#include <iostream>
+
+class Person
+{
+public:
+    explicit Person(std::string const& n) : name(n)
+    {
+        std::cout << "copying string-CONSTR for '" << name << "'\n";
+    }
+
+    explicit Person(std::string&& n) : name(std::move(n))
+    {
+        std::cout << "moving string-CONSTR for '" << name << "'\n";
+    }
+
+    Person(Person const& p) : name(p.name)
+    {
+        std::cout << "COPY-CONSTR Person '" << name << "'\n";
+    }
+
+    Person(Person&& p) : name(std::move(p.name))
+    {
+        std::cout << "MOVE-CONSTR Person '" << name << "'\n";
+    }
+
+private:
+    std::string name;
+};
+```
+
+위 코드는 예상한 대로 동작합니다.
+
+```C++
+std::string s = "sname";
+
+Person p1(s);
+Person p2("tmp");
+Person p3(p1);
+Person p4(std::move(p1));
+```
+
+이제 문자열을 받는 두 생성자를 퍼펙트 포워딩을 적용한 하나의 템플릿 생성자로 만들어 보겠습니다.
+
+```C++
+#include <utility>
+#include <string>
+#include <iostream>
+
+class Person
+{
+public:
+    template <typename STR>
+    explicit Person(STR&& n) : name(std::forward<STR>(n))
+    {
+        std::cout << "TMPL-CONSTR for '" << name << "'\n";
+    }
+
+    Person(Person const& p) : name(p.name)
+    {
+        std::cout << "COPY-CONSTR Person '" << name << "'\n";
+    }
+
+    Person(Person&& p) : name(std::move(p.name))
+    {
+        std::cout << "MOVE-CONSTR Person '" << name << "'\n";
+    }
+
+private:
+    std::string name;
+};
+```
+
+이제 정상적으로 동작하는지 확인해 봅시다. 문자열을 인수로 받는 생성자는 예상한 대로 동작합니다.
+
+```C++
+std::string s = "sname";
+
+Person p1(s);
+Person p2("tmp");
+```
+
+하지만 복사 생성자를 호출하면 오류가 발생합니다.
+
+```C++
+Person p3(p1);
+```
+
+반면 이동 가능한 개체로 새 Person 개체를 생성하는 코드는 잘 동작합니다.
+
+```C++
+Person p4(std::move(p1));
+```
+
+상수 ```Person```을 복사해 생성하는 코드 또한 잘 동작합니다.
+
+```C++
+Person const p2c("ctmp");
+Person p3c(p2c);
+```
+
+오류가 발생하게 된 원인은 무엇일까요? 바로 C++의 오버로드 해결 규칙 때문입니다.
+
+상수가 아닌 Lvalue ```Person p```의 경우, (일반적으로 미리 정의된) 복사 생성자
+
+```C++
+Person(Person const& p)
+```
+
+보다 멤버 템플릿 생성자
+
+```C++
+template <typename STR>
+Person(STR&& n)
+```
+
+이 더 잘 일치합니다.
+
+```STR```은 ```Person&```으로 치환되는데, 복사 생성자는 ```const```로 변환해야 하기 때문입니다.
+
+이 문제를 해결하기 위해 상수가 아닌 Lvalue를 받는 복사 생성자를 제공하는 방법을 생각해 볼 수 있습니다.
+
+```Person(Person& p)```
+
+하지만 이 방법은 완벽한 해결책이 아닙니다.
+
+우리가 정말로 원하는 건 ```Person``` 타입을 인수로 전달하거나 표현식이 ```Person```으로 변환될 수 있는 경우를 막는 것입니다.
+
+```std::enable_if<>```를 사용하면 이 문제를 해결할 수 있습니다.
