@@ -822,3 +822,84 @@ printR(arr);
 ```
 
 따라서 ```printR()```에서 타입 ```T```로 선언된 지역 개체는 상수가 아닙니다.
+
+### 7.2.2 Passing by Nonconstant Reference
+
+전달한 인수를 통해 값을 반환하고 싶다면, 상수가 아닌 레퍼런스를 사용해야 합니다.
+
+```C++
+template <typename T>
+void outR(T& arg)
+{
+    ...
+}
+```
+
+인수로 임시 개체(를 전달하거나 존재하는 개체를 ```std::move()```로 변환해 전달할 경우 ```outR()```을 호출할 수 없습니다.
+
+```C++
+std::string returnString();
+std::string s = "hi";
+outR(s);
+outR(std::string("hi"));
+outR(returnString());
+outR(std::move(s));
+```
+
+상수가 아닌 타입으로 된 배열도 전달할 수 있으며, 타입이 붕괴되지 않습니다.
+
+```C++
+int arr[4];
+outR(arr);
+```
+
+하지만 조금 까다로운 부분이 있습니다. ```const``` 인수를 전달하면 ```arg```의 타입을 상수 레퍼런스라고 추론합니다.
+
+이는 Lvalue를 전달할 거라고 예상하던 인수에 Rvalue를 전달해도 된다는 말입니다.
+
+```C++
+std::string const c = "hi";
+outR(c);
+outR(returnConstString());
+outR(std::mvoe(c));
+outR("hi");
+```
+
+물론 함수 템플릿 내부에서 전달된 인자를 수정하려고 하면 오류가 발생합니다.
+
+호출 표현식 자체에서 ```const``` 개체를 전달할 수 있는 있지만, 함수가 전부 인스턴스화되었을 때 값을 수정하려고 하면 오류가 발생할 것입니다.
+
+상수 개체를 상수가 아닌 레퍼런스로 전달하는 경우를 막고 싶다면, 다음과 같이 하면 됩니다.
+
+- ```static_assert```를 사용해 컴파일 오류를 발생시키는 방법
+
+```C++
+template <typename T>
+void outR(T& arg)
+{
+    static_assert(!std::is_const<T>::value, "out parameter of foo<T>(T&) is const");
+    ...
+}
+```
+
+- ```std::enable_if<>```를 사용해 ```const``` 개체를 전달할 경우 템플릿을 사용하지 못하게 만드는 방법
+
+```C++
+template <typename T,
+          typename = std::enable_if_t<!std::is_const<T>::value>
+void outR(T& arg)
+{
+    ...
+}
+```
+
+- (두번째 방법의 대안) 컨셉을 지원할 경우 사용할 수 있는 방법
+    
+```C++
+    template <typename T>
+    requires !std::is_const_v<T>
+    void outR(T& arg)
+    {
+        ...
+    }
+```
