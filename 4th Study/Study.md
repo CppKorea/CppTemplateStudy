@@ -591,3 +591,50 @@ public:
     ...
 };
 ```
+
+## 6.5 Using Concepts to Simplify ```enable_if<>``` Expressions
+
+별칭 템플릿을 사용하더라도 ```enable_if``` 문법은 꽤 껄끄럽습니다.
+
+함수의 요구 사항이나 제약 사항에 따라 확장하거나 무시하는 언어 기능이 있다면 좋겠습니다.
+
+C++17 표준에는 들어가지 않았지만, 곧 들어갈 언어 기능인 <b>컨셉(Concept)</b>이 있다면 가능합니다.
+
+컨셉이 있다면, ```enable_if```를 사용하지 않고 다음과 같이 간단하게 작성할 수 있을 것입니다.
+
+```C++
+template <typename STR>
+requires std::is_convertible_v<STR, std::string>
+Person(STR&& n) : name(std::forward<STR>(n))
+{
+    ...
+}
+```
+
+요구 사항을 일반적인 컨셉으로 지정할 수도 있습니다.
+
+```C++
+template <typename T>
+concept ConvertibleToString = std::is_convertible_v<T, std::string>;
+```
+
+이제 이 컨셉을 요구 사항으로 표현해 봅시다.
+
+```C++
+template <typename STR>
+requires ConvertibleToString<STR>
+Person(STR&& n) : name(std::forward<STR>(n))
+{
+    ...
+}
+```
+
+다음처럼 표현할 수도 있습니다.
+
+```C++
+template <ConvertibleToString STR>
+Person(STR&& n) : name(std::forward<STR>(n))
+{
+    ...
+}
+```
