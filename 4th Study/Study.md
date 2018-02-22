@@ -638,3 +638,114 @@ Person(STR&& n) : name(std::forward<STR>(n))
     ...
 }
 ```
+
+# Chapter 7: By Value or by Reference?
+
+C++의 함수 호출 방식에는 크게 두 가지가 있습니다. 바로 <b>값에 의한 호출(call-by-value)</b>과 <b>레퍼런스에 의한 호출(call-by-reference)</b>입니다.
+
+일반적으로 레퍼런스에 의한 호출 방식은 비용이 저렴하지만 더 복잡합니다. C++11에 이동 문법이 추가되면서 레퍼런스에 의한 호출 방식이 다양해졌습니다.
+
+- ```X const&``` (상수 Lvalue 레퍼런스) : 매개 변수는 전달된 개체를 나타냅니다. 개체를 수정할 수 없습니다.
+
+- ```X&``` (상수가 아닌 Lvalue 레퍼런스) : 매개 변수는 전달된 개체를 나타냅니다. 개체를 수정할 수 있습니다. 
+
+- ```X&&``` (Rvalue 레퍼런스) : 매개 변수는 전달된 개체를 나타냅니다. 이동 문법으로 전달되었으므로, 값을 수정하거나 "훔칠" 수 있습니다.
+
+# 7.1 Passing by Value
+
+인수로 값을 전달하는 간단한 함수 템플릿을 살펴 봅시다.
+
+```C++
+template <typename T>
+void printV(T arg)
+{
+    ...
+}
+```
+
+```int``` 타입의 인수로 함수 템플릿을 호출하면,
+
+```C++
+void printV(int arg)
+{
+    ...
+}
+```
+
+으로 확장합니다.
+
+매개 변수 ```arg```는 전달된 인수의 종류(개체, 리터럴, 함수에 의해 반환된 값)에 상관없이 복사본을 갖습니다.
+
+만약 ```std::string``` 타입의 변수를 정의하고 이 변수를 인수로 사용해 함수 템플릿을 호출한다면,
+
+```C++
+std::string s = "hi";
+printV(s);
+```
+
+템플릿 매개 변수 ```T```는 ```std::string```으로 인스턴스화되어,
+
+```C++
+void printV(std::string arg)
+{
+    ...
+}
+```
+
+으로 확장합니다.
+
+이 때 ```std::string``` 클래스의 복사 생성자를 통해 문자열의 복사본을 만들게 되는데, 비용이 꽤 비쌉니다.
+
+복사본을 만드는 이유는 원칙적으로 복사 동작은 <b>깊은 복사(Deep Copy)</b>를 하기 때문입니다. 따라서 내부적으로 값을 저장하는 메모리를 할당하게 됩니다.
+
+하지만 복사 생성자가 항상 호출되지는 않습니다. 다음 코드를 보도록 합시다.
+
+```C++
+std::string returnString();
+std::string s = "hi";
+printV(s);
+printV(std::string("hi"));
+printV(returnString());
+printV(std::move(s));
+```
+
+- ```printV(s)``` : Lvalue, 복사 생성자가 호출됩니다.
+- ```printV(std::string("hi"))```, ```printV(returnString())``` : PRvalue, 컴파일러가 인수 전달을 최적화하므로 복사 생성자가 호출되지 않습니다.
+    - C++17부터는 이 최적화를 적용합니다.
+    - C++14까지는 복사를 최적화하지는 않지만 복사 비용이 저렴한 이동 문법을 사용하려고 시도합니다.
+- ```printV(std::move(s))``` : Xvalue, 이동 생성자가 호출됩니다.
+
+따라서 인수로 값을 전달해 ```printV()``` 함수를 호출하는 동작은 Lvalue를 전달할 때만 비용이 비싸다고 할 수 있습니다.
+
+#### 인수로 값을 전달하면 타입이 붕괴됩니다
+
+인수로 값을 전달하는 동작은 타입이 붕괴된다는 특징이 있습니다. 즉, 배열은 포인터로 변환되며 ```const```나 ```volatile```과 같은 한정자는 삭제됩니다.
+
+```C++
+template <typename T>
+void printV(T arg)
+{
+    ...
+}
+
+std::string const c = "hi";
+printV(c);
+
+printV("hi");
+
+int arr[4];
+printV(arr);
+```
+
+문자열 리터럴 ```"hi"```를 전달하면 ```char const[3]``` 타입이 ```char const*```로 붕괴되어 ```T```의 추론된 타입이 됩니다.
+
+따라서, 템플릿은
+
+```C++
+void printV(char const* arg)
+{
+    ...
+}
+```
+
+로 인스턴스화됩니다.
