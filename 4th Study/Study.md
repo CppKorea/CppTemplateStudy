@@ -509,3 +509,85 @@ using EnableIfString = std::enable_if<std::is_convertible<T, std::string>::value
 template <typename T>
 using EnableIfString = std::enable_if_t<std::is_constructible_v<std::string, T>>;
 ```
+
+#### 특별한 멤버 함수를 사용하지 못하게 만들기
+
+```enable_if<>```를 사용해 미리 정의된 복사/이동 생성자, 그리고 복사/이동 할당 연산자를 사용하지 못하게 만들 수 없습니다.
+
+왜냐하면 멤버 함수 템플릿을 특별한 멤버 함수로 간주하지 않기 때문입니다. 따라서 복사 생성자가 필요한 경우 무시됩니다.
+
+다음과 같은 코드가 있다고 합시다.
+
+```C++
+class C
+{
+public:
+    template <typename T>
+    C(T const&)
+    {
+        std::cout << "tmpl copy constructor\n";
+    }
+    ...
+};
+```
+
+C의 복사본이 필요할 경우, 여전히 미리 정의된 복사 생성자를 사용합니다.
+
+(멤버 템플릿의 템플릿 매개 변수 ```T```를 지정하거나 추론할 방법이 없기 때문에 사용할 수 없습니다.)
+
+```C++
+C x;
+C y{x};
+```
+
+미리 정의된 복사 생성자를 삭제하는 방법은 해결책이 되지 못합니다. 그렇다면 어떻게 사용하지 못하게 만들 수 있을까요?
+
+```const volatile```을 인수로 받는 복사 생성자를 선언하고 삭제하면 됩니다.
+
+이렇게 하면 암시적으로 선언되는 또 다른 복사 생성자를 막을 수 있습니다.
+
+이제 여기에 ```volatile```이 아닌 타입을 받는 (삭제된) 복사 생성자보다 일치하는 생성자 템플릿을 정의할 수 있습니다.
+
+```C++
+class C
+{
+public:
+    C(C const volatile&) = delete;
+
+    template <typename T>
+    C(T const&)
+    {
+        std::cout << "tmpl copy constructor\n";
+    }
+    ...
+};
+```
+
+이제 "일반적인" 복사를 할 때도 템플릿 생성자를 사용합니다.
+
+```C++
+C x;
+C y{x};
+```
+
+여기에 ```enable_if<>```를 사용해 제약 사항을 추가할 수 있습니다.
+
+예를 들어, 템플릿 매개 변수가 정수 타입일 경우 복사 생성할 수 없도록 만들 수 있습니다.
+
+```C++
+template <typename T>
+class C
+{
+public:
+    ...
+    C(C const volatile&) = delete;
+
+    template <typename U,
+              typename = std::enable_if_t<!std::is_integral<U>::value>>
+    C(C<U> const&)
+    {
+        ...
+    }
+    ...
+};
+```
