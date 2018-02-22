@@ -651,7 +651,7 @@ C++의 함수 호출 방식에는 크게 두 가지가 있습니다. 바로 <b>�
 
 - ```X&&``` (Rvalue 레퍼런스) : 매개 변수는 전달된 개체를 나타냅니다. 이동 문법으로 전달되었으므로, 값을 수정하거나 "훔칠" 수 있습니다.
 
-# 7.1 Passing by Value
+## 7.1 Passing by Value
 
 인수로 값을 전달하는 간단한 함수 템플릿을 살펴 봅시다.
 
@@ -719,7 +719,9 @@ printV(std::move(s));
 
 #### 인수로 값을 전달하면 타입이 붕괴됩니다
 
-인수로 값을 전달하는 동작은 타입이 붕괴된다는 특징이 있습니다. 즉, 배열은 포인터로 변환되며 ```const```나 ```volatile```과 같은 한정자는 삭제됩니다.
+인수로 값을 전달하는 동작은 타입이 붕괴된다는 특징이 있습니다.
+
+즉, 배열은 포인터로 변환되며 ```const```나 ```volatile```과 같은 한정자는 삭제됩니다.
 
 ```C++
 template <typename T>
@@ -749,3 +751,74 @@ void printV(char const* arg)
 ```
 
 로 인스턴스화됩니다.
+
+## 7.2 Passing by Reference
+
+### 7.2.1 Passing by Constant Reference
+
+임시가 아닌 개체를 전달할 때 (불필요한) 복사를 피하고 싶다면 상수 레퍼런스를 사용하면 됩니다.
+
+```C++
+template <typename T>
+void printR(T const& arg)
+{
+    ...
+}
+```
+
+위 함수의 인수로 개체를 전달하면, 복사본을 절대로 생성하지 않습니다.
+
+```C++
+std::string returnString();
+std::string s = "hi";
+printR(s);
+printR(std::string("hi"));
+printR(returnString());
+printR(std::move(s));
+```
+
+```int```를 레퍼런스로 전달해도 결과는 마찬가지입니다.
+
+```C++
+int i = 42;
+printR(i);
+```
+
+따라서, 템플릿은
+
+```C++
+void printR(int const& arg)
+{
+    ...
+}
+```
+
+으로 인스턴스화됩니다.
+
+#### 인수로 레퍼런스를 전달하면 타입이 붕괴되지 않습니다
+
+인수로 레퍼런스를 전달하는 동작은 타입이 붕괴되지 않는다는 특징이 있습니다.
+
+즉, 배열은 포인터로 변환되지 않으며 ```const```나 ```volatile```과 같은 한정자도 삭제되지 않습니다.
+
+그러나 ```call``` 매개 변수가 ```T const&```로 선언되었기 때문에 템플릿 매개 변수 ```T```는 ```const```로 추론되지 않습니다.
+
+예를 들어,
+
+```C++
+template <typename T>
+void printR(T const& arg)
+{
+    ...
+}
+
+std::string const c = "hi";
+printR(c);
+
+printR("hi");
+
+int arr[4];
+printR(arr);
+```
+
+따라서 ```printR()```에서 타입 ```T```로 선언된 지역 개체는 상수가 아닙니다.
