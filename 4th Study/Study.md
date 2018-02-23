@@ -903,3 +903,54 @@ void outR(T& arg)
         ...
     }
 ```
+
+### 7.2.3 Passing by Forwarding Reference
+
+레퍼런스에 의한 호출을 사용하는 한 가지 이유는 매개 변수를 퍼펙트 포워드 할 수 있기 때문입니다.
+
+포워딩 레퍼런스를 사용할 때 기억해야 될 점은 템플릿 매개 변수의 Rvalue 레퍼런스처럼 보이지만 특별한 규칙을 적용한다는 점입니다.
+
+```C++
+template <typename T>
+void passR(T&& arg)
+{
+    ...
+}
+```
+
+이제 모든 것들을 포워딩 레퍼런스에 전달할 수 있습니다. 일반적으로 레퍼런스를 전달하면 복사본이 만들어지지 않습니다.
+
+```C++
+std::string s = "hi";
+passR(s);
+passR(std::string("hi"))
+passR(returnString());
+passR(std::move(s));
+```
+
+타입 추론의 특별한 규칙 때문에 어떨 때는 놀라운 결과가 나오기도 합니다.
+
+```C++
+std::string const c = "hi";
+passR(c);
+passR("hi");
+int arr[4];
+paassR(arr);
+```
+
+하지만 퍼펙트 포워딩이라는 이름처럼 "완벽"하지는 않습니다. 거의 완벽하긴 하죠.
+
+템플릿 매개 변수 ```T```가 암시적으로 레퍼런스 타입이 될 수 있는 경우가 있는데, 이 때 문제가 발생할 가능성이 있습니다.
+
+```C++
+template <typename T>
+void passR(T&& arg)
+{
+    T x;
+    ...
+}
+
+foo(42);
+int i;
+foo(i);
+```
