@@ -1099,3 +1099,45 @@ void foo(T arg1, T arg2)
 
 foo("hi", "guy");
 ```
+
+### 7.4.1 Special Implementations for String Literals and Raw Arrays
+
+전달된 인수가 포인터인지 배열인지에 따라 서로 다른 코드를 사용하도록 만들어야 할 때가 있습니다.
+
+물론, 전달받은 배열의 타입이 아직 붕괴되지 않은 상태여야 합니다.
+
+두 경우를 구분하려면 전달된 인수가 배열인지 확인해야 합니다. 여기에는 두 가지 방법이 있습니다.
+
+- 배열일 때만 유효한 템플릿 매개 변수를 선언하는 방법
+
+```C++
+template <typename T, std::size_t L1, std::size_t L2>
+void foo(T(&arg1)[L1], T(&arg2)[L2])
+{
+    T* pa = arg1;
+    T* pb = arg2;
+    if (compareArrays(pa, L1, pb, L2))
+    {
+        ...
+    }
+}
+```
+
+여기서 ```arg1```과 ```arg2```은 같은 타입 ```T```를 갖지만 서로 다른 크기 ```L1```과 ```L2```를 갖는 배열입니다.
+
+그러나 다양한 형태의 배열을 지원해야 하기 때문에 여러번 구현해야 할 수도 있습니다.
+
+- 배열을 전달했는지 확인 가능한 타입 특성을 사용하는 방법
+
+```C++
+template <typename T,
+          typename = std::enable_if_t<std::is_array_v<T>>
+void foo(T&& arg1, T&& arg2)
+{
+    ...
+}
+```
+
+이렇게 별도로 처리해야 하는 이유 때문에 다른 함수 이름을 사용해 배열만 따로 처리하는게 좋습니다.
+
+이보다는 ```std::vector```나 ```std::array```를 사용하는게 더 좋습니다.
