@@ -954,3 +954,89 @@ foo(42);
 int i;
 foo(i);
 ```
+
+## 7.3 Using ```std::ref()``` and ```std::cref()```
+
+C++11부터는 호출자가 함수 템플릿의 인자를 값으로 전달할 것인지 레퍼런스로 전달할 것인지를 결정할 수 있습니다.
+
+인수를 값으로 받는다고 선언한 템플릿이 있다고 가정합시다.
+
+이 때 호출자는 ```<functional>``` 헤더 파일에 있는 ```std::cref()```와 ```std::ref()```를 통해 인수를 레퍼런스로 전달할 수 있습니다.
+
+```C++
+template <typename T>
+void printT(T arg)
+{
+    ...
+}
+
+std::string s = "hello";
+printT(s);
+printT(std::cref(s));
+```
+
+```std::cref()```는 템플릿에서 매개 변수의 처리 방식을 바꾸지 않습니다.
+
+다만 전달한 인수 ```s``` 개체가 레퍼런스처럼 행동하도록 래핑하는 역할을 합니다.
+
+사실, ```std::cref()```는 기존 인수를 참조하는 ```std::reference_wrapper<>``` 타입의 개체를 만들어 이 개체를 값으로 전달합니다.
+
+이 래퍼는 오직 한 가지 동작만 지원합니다. 바로 기존 개체를 넘겨주기 위해 래핑하기 전의 타입으로 되돌아가는 암시적 타입 변환 동작입니다.
+
+그래서 전달한 개체를 받을 수 있는 연산자를 갖고 있다면, 레퍼런스 래퍼를 대신 사용할 수 있습니다. 예를 들어,
+
+```C++
+#include <functional>
+#include <string>
+#include <iostream>
+
+void printString(std::string const& s)
+{
+    std::cout << s << '\n';
+}
+
+template <typename T>
+void printT(T arg)
+{
+    printString(arg);
+}
+
+int main()
+{
+    std::string s = "hello";
+    printT(s);
+    printT(std::cref(s));
+}
+```
+
+```printT(std::cref(s))```는 ```std::reference_wrapper<string const>``` 타입의 개체를 값으로 전달합니다.
+
+매개 변수 ```arg```는 ```printString``` 함수에 전달받은 값을 전달하고 래핑하기 전의 타입인 ```std::string```으로 변환합니다.
+
+유의할 점은 컴파일러가 래핑하기 전의 타입으로 되돌아가는 암시적 타입 변환이 필요하다는 사실을 알고 있어야 한다는 점입니다.
+
+이러한 이유로 ```std::ref()```와 ```std::cref()```는 개체를 제네릭 코드를 통해 전달할 때만 잘 동작합니다.
+
+```C++
+template <typename T>
+void printV(T arg)
+{
+    std::cout << arg << '\n';
+}
+...
+std::string s = "hello";
+printV(s);
+printV(std::cref(s));
+```
+
+```C++
+template <typename T1, typename T2>
+bool isless(T1 arg1, T2 arg2)
+{
+    return arg1 < arg2;
+}
+...
+std::string s = "hello";
+if (isless(std::cref(s) < "world")) ...
+if (isless(std::cref(s) < std::string("world"))) ...
+```
