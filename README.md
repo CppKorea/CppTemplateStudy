@@ -36,13 +36,13 @@
     - Chapter 4: Variadic Templates
 - 2월 10일 (발표자 : 옥찬호)
     - Chapter 5: Tricky Basics
-    - Chapter 6: Move Semantics and ```enable_if<>```
 - 2월 17일
     - 휴식 (설날 연휴)
 - 2월 24일 (발표자 : 옥찬호)
+    - Chapter 6: Move Semantics and ```enable_if<>```
     - Chapter 7: By Value or by Reference?
+- 3월 3일 (발표자 : 옥찬호, 배일섭)
     - Chapter 8: Compile-Time Programming
-- 3월 3일 (발표자 : 배일섭)
     - Chapter 9: Using Templates in Practice
     - Chapter 10: Basic Template Terminology
     - Chapter 11: Generic Libraries
