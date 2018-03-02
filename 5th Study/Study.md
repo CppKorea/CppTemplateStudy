@@ -411,3 +411,81 @@ decltype((void)(t.size()), T::size_type())
 ```decltype``` 구문의 피연산자는 쉼표로 구분된 표현식 목록이므로 마지막 표현식 ```T::size_type()```은 원하는 리턴 타입의 값을 반환합니다. (마지막) 쉼표 전에는 유효해야 하는 표현식이 있습니다. 여기서는 ```t.size()```이 유효해야 하는 표현식입니다. 여기서 표현식을 ```void``` 타입으로 변환하는 이유는 표현식의 타입에 대해 오버로드된 사용자 정의 쉼표 연산자가 있을지도 모르는 가능성을 피하기 위한 조치입니다.
 
 참고로 ```decltype```의 인수는 <b>계산되지 않은 피연산자(Unevaluated Operand)</b>입니다.
+
+## 8.5 Compile-Time if
+
+부분 특수화, SFINAE, 그리고 ```std::enable_if```를 사용하면 템플릿 전체를 사용하거나 사용하지 않도록 설정할 수 있습니다. C++17에서는 컴파일 타임 조건에 따라 특정 명령문을 활성화 또는 비활성화 할 수 있는 컴파일 타임 ```if```문을 추가로 도입했습니다. 컴파일러는 ```if constexpr(...)```에서 컴파일 타임 표현식을 사용해 then 부분을 적용할지 (있다면) else 부분을 적용할지를 결정합니다.
+
+첫번째 예제로 4.1.1 절에서 소개했던 가변 함수 템플릿 ```print()```를 고려해 봅시다. 재귀를 사용해 (임의의 타입을 갖는) 인수를 출력합니다. 재귀를 끝내기 위해 별도의 함수를 제공하는 대신 ```constexpr if```문을 사용하면 재귀를 계속할지 여부를 함수 내에서 결정할 수 있습니다.
+
+```C++
+template <typename T, typename... Types>
+void print(T const& firstArg, Types const&... args)
+{
+    std::cout << firstArg << '\n';
+    if constexpr(sizeof...(args) > 0)
+    {
+        print(args...);
+    }
+}
+```
+
+```print()```를 호출할 때 인수가 하나라면, ```args```는 빈 매개 변수 팩이라서 ```sizeof...(args)```가 0이 됩니다. 결과적으로 ```print()```의 재귀 호출은 <b>버려진 문장(Discarded Statement)</b>이라서 인스턴스화되지 않습니다. 따라서, 해당 함수가 존재할 필요가 없으며 재귀가 끝납니다.
+
+코드가 인스턴스화되지 않는다는 사실은 템플릿 매개 변수에 의존하지 않는 올바른 문법과 이름을 검사하는 첫 번째 번역 단계(정의 시간)만 수행됨을 의미합니다.
+
+예를 들어,
+
+```C++
+template <typename T>
+void foo(T t)
+{
+    if constexpr(std::is_integral_v<T>)
+    {
+        if (t > 0)
+        {
+            foo(t - 1);
+        }
+    }
+    else
+    {
+        undeclared(t);
+        static_assert(false, "no integral");
+        static_assert(!std::is_integral_v<T>, "no integral");
+    }
+}
+```
+
+```constexpr```은 템플릿 뿐만 아니라 모든 함수에서 사용할 수 있습니다. ```bool``` 값을 산출하는 컴파일 타임 표현식만 있으면 됩니다.
+
+예를 들어,
+
+```C++
+int main()
+{
+    if constexpr(std::numeric_limits<char>::is_signed)
+    {
+        foo(42);
+    }
+    else
+    {
+        undeclared(42);
+        static_assert(false, "unsigned");
+        static_assert(!std::numeric_limits<char>::is_signed, "char is unsigned");
+    }
+}
+```
+
+예를 들어, 8.2절에서 소개했던 컴파일 타임 함수 ```isPrime()```을 사용해 주어진 크기가 소수가 아닌 경우 코드를 추가로 실행할 수 있습니다.
+
+```C++
+template <typename T, std::size_t SZ>
+void foo(std::array<T, SZ> const& coll)
+{
+    if constexpr(!isPrime(SZ))
+    {
+        ...
+    }
+    ...
+}
+```
