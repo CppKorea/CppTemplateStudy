@@ -365,3 +365,49 @@ namespace std
     };
 }
 ```
+
+### 8.4.1 Expression SFINAE with decltype
+
+특정 조건에 대한 함수 템플릿을 SFINAE하는 올바른 표현식을 찾아서 만들어 내는 작업이 항상 쉽지만은 않습니다.
+
+예를 들어, ```size_type``` 멤버를 갖고 있지만 ```size()``` 멤버 함수가 없는 타입의 인수에 대해 함수 템플릿 ```len()```을 무시하고 싶다고 가정해 봅시다. 함수 선언에서 ```size()``` 멤버 함수에 대한 요구 사항이 없으면, 함수 템플릿을 선택하고 그 결과 인스턴스화로 인해 오류가 발생합니다.
+
+```C++
+template <typename T>
+typename T::size_type len(T const& t)
+{
+    return t.size();
+}
+
+std::allocator<int> x;
+std::cout << len(x) << '\n';
+```
+
+이러한 상황을 처리하기 위한 일반적인 패턴이나 관용구가 있습니다.
+
+- <b>후행 리턴 타입 문법(Trailing Return Type Syntax)</b>을 사용해 리턴 타입을 지정합니다. (맨 앞에 ```auto```를 사용하고 끝부분에 리턴 타입 전에 ```->``` 사용)
+- ```decltype```과 쉼표 연산자를 사용해 리턴 타입을 정의합니다.
+- 쉼표 연산자 시작 부분에서 유효해야 하는 모든 표현식을 나타내세요. (쉼표 연산자를 오버로드하는 경우 ```void```로 변환됨)
+- 쉼표 연산자 끝에 실제 리턴 타입의 개체를 정의합니다.
+
+예를 들어,
+
+```C++
+template <typename T>
+auto len(T const& t) -> decltype((void)(t.size()), T::size_type())
+{
+    return t.size();
+}
+```
+
+여기서 리턴 타입은
+
+```C++
+decltype((void)(t.size()), T::size_type())
+```
+
+입니다.
+
+```decltype``` 구문의 피연산자는 쉼표로 구분된 표현식 목록이므로 마지막 표현식 ```T::size_type()```은 원하는 리턴 타입의 값을 반환합니다. (마지막) 쉼표 전에는 유효해야 하는 표현식이 있습니다. 여기서는 ```t.size()```이 유효해야 하는 표현식입니다. 여기서 표현식을 ```void``` 타입으로 변환하는 이유는 표현식의 타입에 대해 오버로드된 사용자 정의 쉼표 연산자가 있을지도 모르는 가능성을 피하기 위한 조치입니다.
+
+참고로 ```decltype```의 인수는 <b>계산되지 않은 피연산자(Unevaluated Operand)</b>입니다.
