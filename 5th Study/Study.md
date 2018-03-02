@@ -165,3 +165,51 @@ std::cout << isPrime(x);
 ```
 
 는 런타임에 계산하는 코드를 생성할 것입니다.
+
+## 8.3 Execution Path Selection with Partial Specialization
+
+```isPrime()```처럼 컴파일 타임에 테스트하는 함수를 응용해 예제를 만들 수 있는데, 부분 특수화를 사용해 컴파일 타임에 서로 다른 함수 구현 중 하나를 선택할 수 있게 만들 수 있습니다.
+
+예를 들어, 템플릿 인수가 소수인지에 따라 서로 다른 구현 중 하나를 선택할 수 있게 만들 수 있습니다.
+
+```C++
+template <int SZ, bool isPrime(SZ)>
+struct Helper;
+
+template <int SZ>
+struct Helper<SZ, false>
+{
+    ...
+};
+
+template <typename T, std::size_t SZ>
+long foo(std::array<T, SZ> const& coll)
+{
+    Helper<SZ> h;
+}
+```
+
+위 코드는 ```std::array<>```의 크기가 소수인가 아닌가에 따라 서로 다른 클래스 ```Helper<>```를 사용합니다.
+
+위 코드에서는 서로 다른 두 가지 경우의 수를 고려해 2개의 부분 특수화를 사용했습니다. 대신, 경우의 수 중 한 가지를 기본 템플릿으로 사용하고 다른 특별한 경우에는 부분 특수화를 사용하도록 변경할 수 있습니다.
+
+```C++
+template <int SZ, bool = isPrime(SZ)>
+struct Helper
+{
+    ...
+};
+
+template <int SZ>
+struct Helper<SZ, true>
+{
+    ...
+};
+```
+
+함수 템플릿은 부분 특수화를 지원하지 않기 때문에, 특정 제약 사항에 따라 함수 구현을 변경하는 다른 메커니즘을 사용해야 합니다.
+
+- 클래스를 정적 함수와 함께 사용하세요.
+- ```std::enable_if```를 사용하세요.
+- SFINAE를 사용하세요.
+- 컴파일 타임 ```if```를 사용하세요
