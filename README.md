@@ -67,22 +67,24 @@
     - Chapter 19: Implementing Traits
 - 5월 5일
     - 휴식
-- 5월 12일 (발표자 : 정은아)
+- 5월 12일
+    - 휴식
+- 5월 19일 (발표자 : 정은아)
     - Chapter 20: Overloading on Type Properties
     - Chapter 21: Templates and Inheritance
-- 5월 19일 (발표자 : 정은식)
+- 5월 26일 (발표자 : 정은식)
     - Chapter 22: Bridging Static and Dynamic Polymorphism
     - Chapter 23: Metaprogramming
-- 5월 26일 (발표자 : 정원혁)
-    - Chapter 24: Typelists
 - 6월 2일
     - 휴식
-- 6월 9일 (발표자 : 옥찬호)
+- 6월 9일 (발표자 : 정원혁)
+    - Chapter 24: Typelists
+- 6월 16일 (발표자 : 옥찬호)
     - Chapter 25: Tuples
-- 6월 16일 (발표자 : 남정호)
+- 6월 23일 (발표자 : 남정호)
     - Chapter 26: Discriminated Unions
     - Chapter 27: Expression Templates
-- 6월 23일 (발표자 : 옥찬호)
+- 6월 30일 (발표자 : 옥찬호)
     - Chapter 28: Debugging Templates, Appendixes
     - Appendix A: The One-Definition Rule
     - Appendix B: Value Categories
