@@ -3,15 +3,20 @@
 함수 오버로딩은 같은 이름에 매개변수만 다르게 사용되고 있다.
 
 ``` c++
-template<typename T> void f(T*);
-
-template<typename T> void f(Array<T>);
-
+void f(int);
+void f(char const*);
 ```
 
 이렇게 오버로딩을 하게 되면 귀찮고 반복을 많이 해야한다.
 
-그래서 템플릿을 사용해서 개선하자.
+또 함수 이름이 같고 템플릿의 typename 갯수가 같다면 에러 처리가 난다.
+
+```c++
+template<typename Number> void f(Number);		// only for numbers
+template<typename Container> void f(Container);	// only for containers
+```
+
+하지만 반복하지 않고 템플릿을 사용하는 법을 이번장에서 얘기해본다.
 
  
 
@@ -19,36 +24,23 @@ template<typename T> void f(Array<T>);
 
 ```c++
 template<typename T>
-
 void swap(T& x, T& y) 
-
 {
-
     T tmp(x);
-
     x = y;
-
     y = tmp;
-
 }
-
 ```
 
 이 함수는 Array<T>를 사용하면 더 효과적으로 개선할수 있다.
 
 ```c++
 template<typename T>
-
 void swap(Array<T>& x, Array<T>& y)
-
 {
-
     swap(x.ptr, y.ptr);
-
     swap(x.len, y.len);
-
 }
-
 ```
 
 둘다 swap함수지만 Array<T>를 사용한 부분이 더 정확히 데이터 교환을 했다.(사실 더 나은 선택은 std::move를 사용하는 것이다. std::move를 사용하면 템플릿의 복사를 막을 수 있다.)
@@ -66,29 +58,19 @@ std::advance함수를 만들어보면
 ```c++
 template<typename InputIterator, typename Distance>
 void advanceIter(InputIterator& x, Distance n)
-
 {
-
-    whiel(n > 0)  // linear time
-
+    while(n > 0)  // linear time
     {
-
         ++x;
-
         --n;
-
     }
-
 }
 
 template<typename RandomAccessIterator, typename Distance>
-
-void advanceIter(RandomAccessIterator& x, Distance n) {
-
+void advanceIter(RandomAccessIterator& x, Distance n) 
+{
     x += n;     // constant time
-
 }
-
 ```
 
 이 두 함수는 컴파일 에러를 낸다. 왜냐하면 템플릿 파라미터의 갯수가 같기 때문이다. 
@@ -103,43 +85,26 @@ void advanceIter(RandomAccessIterator& x, Distance n) {
 
 ```c++
 template<typename InputIterator, typename Distance>
-
 void advanceIterImpl(InputIterator& x, Distance n, std::input_iterator_tag)
-
 {
-
     whiel(n > 0)  // linear time
-
     {
-
         ++x;
-
         --n;
-
     }
-
 }
 
 template<typename RandomAccessIterator, typename Distance>
-
-void advanceIterImpl(RandomAccessIterator& x, Distance n, std::random_access_iterator_tag) {
-
+void advanceIterImpl(RandomAccessIterator& x, Distance n, std::random_access_iterator_tag) 
+{
     x += n;     // constant time
-
 }
-
- 
 
 template<typename Iterator, typename Distance>
-
 void advanceIter(Iterator& x, Distance n)
-
 {
-
     advanceIterImpl(x, n, typename std::iterator_traits<Iterator>::iterator_category());
-
 }
-
 ```
 
 [std::iterator_traits](https://msdn.microsoft.com/ko-kr/library/zdxb97eh.aspx) 는 iterator의 카테고리를 알려주는 클래스이다.
@@ -319,7 +284,7 @@ template<typename Iterator, typename = EnableIf<IsRandomAccessIterator<Iterator>
 Container(Iterator first, Iterator last);
 ```
 
-그래서 가상의 typename을 하나 더 만들어서 사용하면 우회 가능... 
+그래서 가상의 typename을 하나 더 만들어서 사용하면 우회 가능하다.
 
 
 
@@ -384,7 +349,7 @@ void f(T p) {
 }
 ```
 
-그러니까 EnableIf<…> 대신에 EnableIf f<T>를 호출해서 사용하면 된다.
+그러니까 EnableIf<…>가 실패 할 때 대신에 EnableIf f<T>를 호출해서 사용하면 된다.
 
 
 
@@ -415,7 +380,7 @@ public:
 
 해당 개념은 언어가 지원하고 있다.
 
-[require](http://en.cppreference.com/w/cpp/language/constraints, "714쪽 E1에서 설명")은 템플릿의 요구사항이다. 요구사항중 한개라도 충족되지 않으면 템플릿이 후보로 간주되지 않는다. 그래서 EnableIf로 표현된것보다 더 직접적으로 표현한 것이다.
+[require](http://en.cppreference.com/w/cpp/language/constraints)은 템플릿의 요구사항이다. 요구사항중 한개라도 충족되지 않으면 템플릿이 후보로 간주되지 않는다. 그래서 EnableIf로 표현된것보다 더 직접적으로 표현한 것이다.
 
 EnableIf에 비해 나은점은 template중에서 순서를 제공함으로 tag를 따로 작성 할 필요가 없다. 또 require를 비 템플릿에 연결할 수 있다.
 
@@ -714,7 +679,7 @@ public:
 }
 
 template<typename FROM, typename TO>
-struct IsCOnvertibleT : IsConvertibleHelper<FROM, TO>::Type {} ;
+struct IsConvertibleT : IsConvertibleHelper<FROM, TO>::Type {} ;
 
 template<typename FROM, typename TO>
 using IsConvertible = typename IsConvertibleT<FROM, TO>::Type;
@@ -730,7 +695,7 @@ constexpr bool isConvertible = IsConvertibleT<FROM, TO>::value;
 #include "lessresult.hpp"
 
 template<typename T>
-EnavleIf<IsConvertible<LessResult<T const&, T Const&>, bool>, T const&>
+EnableIf<IsConvertible<LessResult<T const&, T const&>, bool>, T const&>
 min(T const& x, T const& y)
 {
     if(y < x) {
@@ -910,8 +875,8 @@ vector(InputIterator first, InputIterator second, allocator_type const& alloc = 
 
 ## 20.7 Afternotes
 
-tag dispatching은 오랫동안 C++로 알려져 있다. 이것은 STL의 원래 구현에서 사용되고 있었고 흔히 alongside traits과 함께 사용되었다. SFINAE와 EnableIf의 사용은 훨씬 더 새롭다. 이 책의 첫번째 판에서는 SFINAE라는 용어를 소개하고 멤버타입의 존재를 발견하는 방법을 알려줬다.
+tag dispatching은 오랫동안 C++로 알려져 왔다. 이것은 STL의 원래 구현에서 사용되고 있었고 흔히 alongside traits과 함께 사용되었다. SFINAE와 EnableIf의 사용은 훨씬 더 새롭다. 이 책의 첫번째 판에서는 SFINAE라는 용어를 소개하고 멤버타입의 존재를 발견하는 방법을 알려줬다.
 
 enable if라는 기술과 용어는 JaakkoJ¨arvi, Jeremiah Will-cock, Howard Hinnant, and Andrew Lumsdaine의 책 [OverloadingProperties] 에 처음 나온다. 이 책은 EnableIf템플릿, EnableIf 를 사용하여 함수 overloading을 구현하는 방법에 대해서 설명하고 있다. 그 이후로 EnableIf와 같은 유사한 기술은 C++ STL을 포함하여 고급 템플릿 라이브러리 구현에 널리 보급되었다. 더욱이 이러한 기법의 인기는 C++11에서 확장된 SFINAE동작을 유발했다. Peter Dimov는 함수템플릿의 기본템플릿 인수가 다른 함수 매개변수를 도입하지 않고 생성자 템플릿에 EnableIf를 사용할 수 있다는 사실을 처음으로 지적했다.
 
-이 개념 언어 기능은 C++17 이후에 표준이 될거라고 예상한다. 
+이 개념 언어 기능은 C++17 이후에 표준이 될거라고 예상한다. (c++20?)

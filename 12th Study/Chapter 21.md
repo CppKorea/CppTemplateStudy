@@ -64,11 +64,11 @@ int main()
 }
 ```
 
-이 프로그램을 실행하면 모든 클래스에 동일한 크기가 인쇄되지만 크기가 0인 클래스는 없다. ![image-20180507114808984](/Users/euna/CppTemplateStudy/12th Study/image-20180507114808984.png)
+이 프로그램을 실행하면 모든 클래스에 동일한 크기가 인쇄되지만 크기가 0인 클래스는 없다. ![image-20180507114808984](/image-20180507114808984.png)
 
  즉 EmptyToo클래스 내에서 Empty클래스에는 공백이 없다. 또한 최적화된 empty클래스 (그리고 다른 베이스 클래스가 없는) 도 비어있다는 사실에 유의해야한다. 이것은 EmptyThree클래스가 Empt클래스와 사이즈가 같은 이유를 설명한다. 컴파일러가 EBCO(Empty Base Class Object)를 구현하지 않으면 다양한 크기로 출력된다.
 
-![image-20180507115019952](/Users/euna/CppTemplateStudy/12th Study/image-20180507115019952.png)
+![image-20180507115019952](/image-20180507115019952.png)
 
 ```c++
 #include <iostream>
@@ -95,7 +95,7 @@ int main()
 
 NonEmpty클래스가 빈 클래스가 아니라는건 놀랍지 않다. 어쨌든 멤버가 없고 기본 클래스도 수행하지 않는다. 그러나 NonEmpty의 기본클래스 Empty와 EmptyToo는 같은 주소값에 할당 될 수 없다. 이는 EmptyToo의 기본클래스 Empty가 클래스 NonEmpty의 기본 클래스 Empty와 동일한 주소로 끝나기 때문이다.
 
-![image-20180507120526700](/Users/euna/CppTemplateStudy/12th Study/image-20180507120526700.png)
+![image-20180507120526700](/image-20180507120526700.png)
 
 EBCO(Empty Base Class Object)의 제한에 대한 이론적 근거는 두 포인터가 같은 객체를 가리키는지 비교할 수 있다. 포인터는 항상 내부적으로 주소로 표현되기 때문에 두개의 서로 다른 주소(포인터값)가 서로 다른 두 객체에 해당하는지 확인해야 한다. 
 
@@ -413,7 +413,7 @@ bool operator!= (T const& x1, T xonst& x2)
 
 실제로 c++STL <utility>헤더에 이러한 정의가 포함되어 있다.
 
-![image-20180509002926900](/Users/euna/CppTemplateStudy/12th Study/image-20180509002926900.png)
+![image-20180509002926900](/image-20180509002926900.png)
 
 그러나 이러한 정의(!=, >, <=, >=)는 std에서 사용할수 있게 되었을때 문제가 발생했다고 판단되면 표준화 중에 [std::rel_ops]("std::rel_ops")의 연산자로 변경되었다. ~~근데 이게 c++20에서는 deprecated되고 <=>라는 operater를 사용하라고...~~
 
@@ -831,19 +831,6 @@ public:
 
 이 방식은 mixed in할 각 클래스에 더 많은 작업을 요구하므로 Label 및 Color와 같은 클래스는 클래스 템플릿이 되어야 한다. mixed-in 클래스는 mixed-in한 파생클래스의 특정 인스턴스에 동작을 맞출수 있다. 예를들면 앞에서 설명한 ObjectCounter템플릿을 Point에 섞어서 Polygon에서 생성한 포인트 수를 계산하고 해당 mixin을 다른 특수한 응용프로그램으로 구성할 수 있다.
 
- ```c++
-template<template<typename>... Mixins>
-class Point : public ObjectCounter<Point<Mixins<Point>>>...
-{
-public:
-	double x, y;
-	Point() : Mixins<Point>()..., x(0.0), y(0.0) { }
-	Point(double x, double y) : Mixins<Point>()..., x(x), y(y) { }
-};
- ```
-
-???
-
 
 
 ### 21.3.2 Parameterized Virtuality
@@ -1009,7 +996,7 @@ PolicySelector<Policy3_is<CustomPolicy>,
 
 이제 Discriminator<>클래스 템플릿을 사용하면 모든 템플릿 인수가 기본 클레스가 되는 계층구조가 된다.
 
-![image-20180516000151118](/Users/euna/CppTemplateStudy/12th Study/image-20180516000151118.png)
+![image-20180516000151118](/image-20180516000151118.png)
 
 P1, P2, P3, P4 모두 기본 타입을 정의하는 동일한 가상 기본 클래스 DefaultPolicies를 갖는다. 그러나 P3은 파생클래스 중 하나, Policy3_is<>에서 다시 정의한다. 지배 규칙에 따라 정의는 기본 클래스의 정의를 숨긴다. 따라서 이것은 더이상 모호하지 않다.
 
@@ -1027,7 +1014,7 @@ public:
 };
 ```
 
-**[inherit/namedtmpl.cpp]("http://www.josuttis.com/tmplbook/inherit/namedtmpl.cpp.html")**
+**[inherit/namedtmpl.cpp](http://www.josuttis.com/tmplbook/inherit/namedtmpl.cpp.html)**
 
 ```c++
 #include <iostream>
@@ -1140,6 +1127,8 @@ int main()
     bc2.print();
 }
 ```
+
+[결과](http://coliru.stacked-crooked.com/a/2367157d4febc617)
 
 
 
