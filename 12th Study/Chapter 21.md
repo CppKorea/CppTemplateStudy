@@ -391,8 +391,7 @@ int main()
 Morden C++에서는, 템플릿 클래스에서 friend 함수를 정의하는것의 유일한 장점은 문법적 장점 뿐이다. (클래스를 둘러싸고 있는 범위에 관계없이 private멤버와 protected멤버에 접근할수 있는 것) 그러나 friend함수 정의는 CRTP와 결합됐을때 유용하게 사용할 수 있다.
 
 
-
-###21.2.2 Operator Implementations
+### 21.2.2 Operator Implementations
 
 오버로드 된 연산자를 제공하는 클래스를 구현할때 여러 다른 연산자에 오버로드를 구현하는 것이 일반적이다. 예를들면 operator==을 구현하는 클래스는 operator!=나 operator>를 구현할 것이다. 대부분의 경우 단 한개의 연산자를 구현하는것은 흥미롭고  다른 연산자는 해당 연산자에 따라 간단히 정의할 수 있다.
 
