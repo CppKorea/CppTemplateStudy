@@ -107,9 +107,7 @@ EBCO(Empty Base Class Object)의 제한에 대한 이론적 근거는 두 포인
 
 ### 21.1.2 Members as Base Classes
 
-EBCO는 같은 데이터 멤버를 갖지 않는다 왜냐하면 포인터 멤버를 대표해서 문제를 야기할 수 있기 때문이다. 
-
-As a result, it is sometimes desirable to implement as a (private) base class what would at first sight be thought of as a member variable.
+The EBCO has no equivalent for data members because(among other things) it would create some problems with the representation of pointers to member. As a result, it is sometimes desirable to implement as a (private) base class what would at first sight be thought of as a member variable.
 
 문제는 templates의 문맥에서 가장 흥미롭다. 왜냐하면 Template parameters는 종종 empty class type으로 대체되지만 일반적으로는 이 규칙에 의존할 수 없다. template type parameters에 대해 알려진게 없으면 EBCO를 쉽게 사용할 수 없다.
 
@@ -122,8 +120,6 @@ private:
     ...
 };
 ```
-
-템플릿 매개변수 중 한개 혹은 모두가 empty class type으로 대체될 수 있다. 이 경우 MyClass<T1, T2>표현은 차선책일수 있으며 MyClass<T1, T2>의 모든 인스턴스에 대해 메모리를 낭비 할 수 있다.?????
 
 It is entirely possible that one or both template parameters are substituted by an empty class type. If this is the case, then the representation of MyClass<T1, T2> may be suboptimal and may waste a word of memory for every instance of a MyClass<T1, T2>
 
@@ -164,7 +160,7 @@ private:
 };
 ```
 
-이렇게 하면 기존 코드보다 구현을 복잡하게 만든다. 그러나 다양한 템플릿 라이브러리 구현자들은 라이브러리의 클라이언트에 대한 성능향상이 추가된 복잡성을 정당화 한다고 한다. 우리는 이 말을 뒤에 tuple에서 더 자세히 살펴본다.
+이렇게 하면 기존 코드보다 구현을 복잡하게 만든다. 그러나 다양한 템플릿 라이브러리 구현자들은 라이브러리의 클라이언트에 대한 성능향상이 추가된 복잡성을 정당화 한다고 한다. 이 말은 뒤에 tuple에서 더 자세히 살펴본다.
 
 
 
@@ -812,7 +808,7 @@ public:
 };
 ```
 
-Mixins는 템플릿에 내부 데이터 유형과 인터페이스를 노출하거나 문서화하지 않고 내부 저장 객체를 사용자 지정 데이터를decorating하는 것과 같은 약간의 customization이 필요할때 유용하다.
+Mixins는 템플릿에 내부 데이터 유형과 인터페이스를 노출하거나 문서화하지 않고 내부 저장 객체를 사용자 지정 데이터를 decorating하는 것과 같은 약간의 customization이 필요할때 유용하다.
 
 
 
