@@ -600,9 +600,7 @@ using BestMatchInSet = typename BestMatchInSetT<T, Types...>::Type;
 
 EnableIf의 기술의 본질은 템플릿 매개변수가 특정 기준을 충족시키는 경우에만 특정 템플릿 또는 부분 특수화를 하는것이다. 예를 들어 advanceIter() 알고리즘의 가장 효율적인 방식은 iterator의 카테고리가 std::random_access_iterator_tag로 변환 가능한지 확인하는것이다. 
 
-What if we took this notion to the extreme and encoded every operation that the template performs on its template arguments as part of the EnableIf condition? The instantiation of such a template could never fail, because template arguments that do not provide the required operations would cause a deduction failure(via EnableIf) rather than allowing the instantiation to proceed.
-
-이 인스턴스화는 절대 실패하지 않습니다 왜냐하면 템플릿 매개변수가 적절한 operation을 제공하지 않으면 인스턴화를 진행하는 대신 EnableIf를 통해 deduction을 유발하기 때문이다..?? (instantiation을 하기전에 deduction 에러나서..??)
+이 인스턴스화는 절대 실패하지 않는다. 왜냐하면 템플릿 매개변수가 적절한 operation을 제공하지 않으면 인스턴화를 진행하는 대신 EnableIf를 통해 deduction을 유발하기 때문이다.
 
 이러한 템플릿은 인스턴스화에 안전한 템플릿이라고 부른다.
 
@@ -879,4 +877,4 @@ tag dispatching은 오랫동안 C++로 알려져 왔다. 이것은 STL의 원래
 
 enable if라는 기술과 용어는 JaakkoJ¨arvi, Jeremiah Will-cock, Howard Hinnant, and Andrew Lumsdaine의 책 [OverloadingProperties] 에 처음 나온다. 이 책은 EnableIf템플릿, EnableIf 를 사용하여 함수 overloading을 구현하는 방법에 대해서 설명하고 있다. 그 이후로 EnableIf와 같은 유사한 기술은 C++ STL을 포함하여 고급 템플릿 라이브러리 구현에 널리 보급되었다. 더욱이 이러한 기법의 인기는 C++11에서 확장된 SFINAE동작을 유발했다. Peter Dimov는 함수템플릿의 기본템플릿 인수가 다른 함수 매개변수를 도입하지 않고 생성자 템플릿에 EnableIf를 사용할 수 있다는 사실을 처음으로 지적했다.
 
-이 개념 언어 기능은 C++17 이후에 표준이 될거라고 예상한다. (c++20?)
+이 개념 언어 기능은 C++17 이후에 표준이 될거라고 예상한다. 

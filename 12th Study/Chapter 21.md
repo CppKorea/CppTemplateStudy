@@ -64,11 +64,13 @@ int main()
 }
 ```
 
-이 프로그램을 실행하면 모든 클래스에 동일한 크기가 인쇄되지만 크기가 0인 클래스는 없다. ![image-20180507114808984](/image-20180507114808984.png)
+이 프로그램을 실행하면 모든 클래스에 동일한 크기가 인쇄되지만 크기가 0인 클래스는 없다. ![](./image-20180507114808984.png)
+
+
 
  즉 EmptyToo클래스 내에서 Empty클래스에는 공백이 없다. 또한 최적화된 empty클래스 (그리고 다른 베이스 클래스가 없는) 도 비어있다는 사실에 유의해야한다. 이것은 EmptyThree클래스가 Empt클래스와 사이즈가 같은 이유를 설명한다. 컴파일러가 EBCO(Empty Base Class Object)를 구현하지 않으면 다양한 크기로 출력된다.
 
-![image-20180507115019952](/image-20180507115019952.png)
+![image-20180507115019952](./image-20180507115019952.png)
 
 ```c++
 #include <iostream>
@@ -95,7 +97,7 @@ int main()
 
 NonEmpty클래스가 빈 클래스가 아니라는건 놀랍지 않다. 어쨌든 멤버가 없고 기본 클래스도 수행하지 않는다. 그러나 NonEmpty의 기본클래스 Empty와 EmptyToo는 같은 주소값에 할당 될 수 없다. 이는 EmptyToo의 기본클래스 Empty가 클래스 NonEmpty의 기본 클래스 Empty와 동일한 주소로 끝나기 때문이다.
 
-![image-20180507120526700](/image-20180507120526700.png)
+![image-20180507120526700](./image-20180507120526700.png)
 
 EBCO(Empty Base Class Object)의 제한에 대한 이론적 근거는 두 포인터가 같은 객체를 가리키는지 비교할 수 있다. 포인터는 항상 내부적으로 주소로 표현되기 때문에 두개의 서로 다른 주소(포인터값)가 서로 다른 두 객체에 해당하는지 확인해야 한다. 
 
@@ -401,7 +403,7 @@ bool operator!= (X const& x1, X const& x2)
 }
 ```
 
-많은 연산자중에 operator!=와 비슷한 연산이 있으면 이것을 템플릿화 하고 싶은 유혹을 느낀다. ~~(안느끼고싶다)~~
+많은 연산자중에 operator!=와 비슷한 연산이 있으면 이것을 템플릿화 하고 싶은 유혹을 느낀다. 
 
 ```c++
 template<typename T>
@@ -413,9 +415,9 @@ bool operator!= (T const& x1, T xonst& x2)
 
 실제로 c++STL <utility>헤더에 이러한 정의가 포함되어 있다.
 
-![image-20180509002926900](/image-20180509002926900.png)
+![image-20180509002926900](./image-20180509002926900.png)
 
-그러나 이러한 정의(!=, >, <=, >=)는 std에서 사용할수 있게 되었을때 문제가 발생했다고 판단되면 표준화 중에 [std::rel_ops]("std::rel_ops")의 연산자로 변경되었다. ~~근데 이게 c++20에서는 deprecated되고 <=>라는 operater를 사용하라고...~~
+그러나 이러한 정의(!=, >, <=, >=)는 std에서 사용할수 있게 되었을때 문제가 발생했다고 판단되면 표준화 중에 [std::rel_ops]("std::rel_ops")의 연산자로 변경되었다. 
 
 실제로 이러한 정의를 볼수 있게 되면 모든 유형에 operator!=(인스턴스화에 실패 할 수 있음)연산자가 나타나게되고 연산 결과는 항상 정확히 일치한다. 첫번째의 문제, operator!=가 적절한 operator==가 있는 경우에만 인스턴스화 되는 문제는 SFINAE기술로 해결할수 있다. 두번째의 문제, derived-to-base 변환같은 일을 할때 일반적인 operator!= 정의는 사용자가 만든 정의보다 우선하게 된다.
 
@@ -627,7 +629,7 @@ class ListNodeIterator
 
 Our IteratorFacade makes it easy to build an iterator adapter that takes an existing iterator and exposes a new iterator that provides some transformed view of the underlying sequence.
 
-```
+```c++
 struct person {
     std::string firstName;
     std::string lastName;
@@ -899,9 +901,9 @@ class BreadSlicer {
 
 아마도 이러한 템플릿은 BreadSlicer<> 구문을 사용하여 기본 템플릿 인수 값과 함께 사용할 수 있다. 그러나 기본이 아닌 매개변수를 지정해야 하는 경우 앞에 나온 모든 인수도 지정해야 한다.
 
-BreadSlicer<DefaultPolicy1, DefaultPolicy2, Custom>대신 <Policy3 = Custom>을 선택하는게 더 매력적이다.
+BreadSlicer<DefaultPolicy1, DefaultPolicy2, Custom>대신 \<Policy3 = Custom>을 선택하는게 더 매력적이다.
 
-이 기술은 기본 클래스에 기본 형식값을 배치하고 파생클래스를 통해 일부 형식을 재정의 하는것으로 구성된다. 매개변수 타입을 직접 지정하는대신, 도우미 클래스를 통해 매개변수 타입을 제공한다. 예를들어 BreadSlicer<Policy3_is<Custom>>을 쓸수 있다. 각 템플릿 인수는 Policy를 설명 할 수 있기 때문에 기본값은 다를 수 없다. 즉 높은 수준에서 모든 템플릿 매개변수는 동일하다.
+이 기술은 기본 클래스에 기본 형식값을 배치하고 파생클래스를 통해 일부 형식을 재정의 하는것으로 구성된다. 매개변수 타입을 직접 지정하는대신, 도우미 클래스를 통해 매개변수 타입을 제공한다. 예를들어 BreadSlicer<Policy3_is\<Custom>>을 쓸수 있다. 각 템플릿 인수는 Policy를 설명 할 수 있기 때문에 기본값은 다를 수 없다. 즉 높은 수준에서 모든 템플릿 매개변수는 동일하다.
 
 ```c++
 template<typename PolicySetter1 = DefaultPolicyArgs,
@@ -996,7 +998,7 @@ PolicySelector<Policy3_is<CustomPolicy>,
 
 이제 Discriminator<>클래스 템플릿을 사용하면 모든 템플릿 인수가 기본 클레스가 되는 계층구조가 된다.
 
-![image-20180516000151118](/image-20180516000151118.png)
+![image-20180516000151118](./image-20180516000151118.png)
 
 P1, P2, P3, P4 모두 기본 타입을 정의하는 동일한 가상 기본 클래스 DefaultPolicies를 갖는다. 그러나 P3은 파생클래스 중 하나, Policy3_is<>에서 다시 정의한다. 지배 규칙에 따라 정의는 기본 클래스의 정의를 숨긴다. 따라서 이것은 더이상 모호하지 않다.
 
