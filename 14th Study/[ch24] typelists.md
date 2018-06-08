@@ -10,26 +10,24 @@
 
 ---
 
-## 1. Overview
-* ### 템플릿책 24장에서 배울 수 있는 것들
+## 1. 개요
+* ### 주교재 24장에서 배울 수 있는 것들
     - Typelist의 정의
         * A type that represents a list of types and can be manipulated by a *template metaprogram*.
     - 함수형 프로그래밍과의 관계
         * Scheme, ML, 그리고 Haskell 등의 `list`와 비슷한 기능
     - 응용 알고리즘들
         * 먼저 나오는 것들이 뒤따르는 것을 만드는 기초 도구로 작용
-* ### 다른 곳에서 보충해야 할 것들
+* ### 다른 곳에서 보충하면 좋은 것들
     - 왜 생겨난건지
     - 옛날 C++에서의 typelist 사용법
 * ### 발표내용의 구성
-    1. 왜 생겨났으며, 뭐할때 쓰는건지 알아보기
-    1. 옛날 C++에서의 typelist 사용법과 비교하며 구현 가능한 알고리즘 살펴보기
-        * 고전 vs 신형 C++ 예제들은 서로 개별적인 맥락을 가집니다. (출처가 상이합니다.)
-    1. 여담...
+    1. 기본적으로는 주교재의 흐름을 따라감
+    1. Alexandrescu 책에 소개된 예제들과 일부 예제들을 비교하며 살펴보기
 
 ---
 
-## 2. Motive
+## 2. 동기
 ```C++
 class WidgetFactory
 {
@@ -98,7 +96,7 @@ using SignedIntegralTypes =
 
 ---
 
-## 3. Algorithms
+## 3. 응용 알고리즘
 ### 3.0. 기초 알고리즘 준비
 * 목적: 옛날 C++에서 Head/Tail을 사용한 테크닉을 신형 C++에서도 사용하기 위하여.
 1. Front: 가장 앞단의 원소 보기
@@ -723,7 +721,7 @@ using CTTypelist = Typelist<CTValue<T, Values>...>;
 // Primes v2.0
 using Primes = CTTypelist<int, 2, 3, 5, 7, 11>;
 ```
-> 효과: `int`와 `CTValue`타이핑 절약
+> 효과: `int`와 `CTValue`타이핑 절약<br>
 > 문제점: 오류가 발생하면 `alias`에서 메시지가 지저분하게 나옴.
 
 ##### 4.1.3.3. 디버깅이 쉬운 `Valuelist` 만들기
@@ -862,3 +860,10 @@ using SignedIntegralTypes = Cons<signed char, Cons<short, Cons<int, Cons<long, C
 ### 7.4. Typelist를 사용하는 라이브러리
 * Boost.MPL: typelist를 조작하는데 쓰임.
 > * [Boost.MPL](https://www.boost.org/doc/libs/1_63_0/libs/mpl/doc/index.html)
+
+## 8. 여담
+### 8.1. 설계 전략
+#### 8.1.1. 기본서
+* [Design Patterns: Elements of Reusable Object-Oriented Software](https://www.amazon.com/dp/0201633612?tag=amz-mkt-chr-us-20&ascsubtag=1ba00-01000-org00-win10-other-nomod-us000-pcomp-feature-scomp-wm-5&ref=aa_scomp)
+#### 8.1.2. 동시성 관련 (Java)
+* [Concurrent programming in Java](https://www.amazon.com/Concurrent-Programming-Java%C2%99-Principles-Pattern/dp/0201310090)
