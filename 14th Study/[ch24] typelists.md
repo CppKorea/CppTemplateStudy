@@ -5,6 +5,7 @@
     1. ### 응용 알고리즘
     1. ### Nontype Typelists
     1. ### Pack Expansion을 이용한 최적화 알고리즘
+    1. ### Cons-style Typelist
     1. ### Afternotes
     1. ### 여담
 
