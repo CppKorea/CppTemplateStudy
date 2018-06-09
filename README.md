@@ -79,7 +79,7 @@
     - 휴식
 - 6월 9일 (발표자 : 정원혁)
     - Chapter 24: Typelists
-- 6월 16일 (발표자 : 옥찬호)
+- 6월 16일 (발표자 : 박동하)
     - Chapter 25: Tuples
 - 6월 23일 (발표자 : 남정호)
     - Chapter 26: Discriminated Unions
