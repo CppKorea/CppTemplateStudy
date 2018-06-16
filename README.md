@@ -79,12 +79,12 @@
     - 휴식
 - 6월 9일 (발표자 : 정원혁)
     - Chapter 24: Typelists
-- 6월 16일 (발표자 : 박동하)
+- 6월 23일 (발표자 : 박동하)
     - Chapter 25: Tuples
-- 6월 23일 (발표자 : 남정호)
+- 6월 30일 (발표자 : 남정호)
     - Chapter 26: Discriminated Unions
     - Chapter 27: Expression Templates
-- 6월 30일 (발표자 : 옥찬호)
+- 7월 7일 (발표자 : 옥찬호)
     - Chapter 28: Debugging Templates, Appendixes
     - Appendix A: The One-Definition Rule
     - Appendix B: Value Categories
