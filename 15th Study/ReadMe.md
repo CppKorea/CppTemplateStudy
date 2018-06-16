@@ -57,6 +57,15 @@ class Tuple<>
 ```
 반복적으로 사용되는 경우에 대해선, 각 Tuple 개체는 head와 tail에 대해서 저장공간을 가집니다. 빈 tuple은 연관된 저장공간이 없게 되죠.
 
+>
+```
+ let Tuple = { elements }
+
+ EmptyTuple == { }
+ e          == { e, {} }
+ { a, b }   == { a, { b } } == { a, { b, {} } }
+```
+>
 
 `get` 함수 템플릿은 재귀적으로 요청받은 원소를 찾아내게 됩니다. 
 ```c++
@@ -231,6 +240,7 @@ class PushBackT<Tuple<Types...>, Elem>
 };
 ```
 이제, 24장에서 다뤘던 typelist 모든 알고리즘들이 `Tuple`에 대해서도 동일하게 동작합니다. tuple안의 타입들을 다루는 게 수월해졌죠. 
+
 ```cpp
 Tuple<int, double, std::string> t1(17, 3.14, "Hello, World!");
 using T2 = PopFront<PushBack<decltype(t1), bool>>;
@@ -244,6 +254,27 @@ std::cout << t2;
 곧 보겠지만, tuple에 적용된 typelist 알고리즘들은 tuple 알고리즘의 결과 타입들을 결정하는데 사용됩니다.
 
 ### 3.2 Adding to and Removing from Tuple
+
+>
+```
+ function popFront  
+    == ( { h, t } ) -> { t } || 
+       ( {}       ) -> {}
+
+ function popBack
+    == ( { h, t } ) -> { h, popBack( t ) } || 
+       ( { e }    ) -> {}
+
+ function pushFront 
+    == ( { h, t }, v ) -> { v, { h, t }} ||
+       ( {},       v ) -> { v }
+
+ function pushBack  
+    == ( { h, t }, v ) -> { h, t, v } ||
+       ( {},       v ) -> { v }
+```
+>
+
 보다 유용한 알고리즘을 작성하기 위해선 tuple의 시작이나 끝에 원소를 더하는 기능이 필요합니다. typelist와 마찬가지로, tuple의 앞(front)에 원소를 추가하는 것은 뒤쪽(bacK)에 원소를 추가하는 것보다 쉽습니다. 그러니 `pushFront` 부터 시작하도록 하죠.
 
 ```cpp
@@ -304,6 +335,14 @@ std::cout << std::boolalpha << t2 << '\n';
 ```
 
 ### 3.3 Reversing a Tuple
+>
+```
+ function reverse
+    == ( { h, t } ) -> { reverse(t), h } || 
+       ( {}       ) -> {}
+```
+>
+
 tuple의 원소들은 앞서 Section 24.2.4, 557 page에서 소개된 typelist 뒤집기를 적용하여 역순으로 만들 수도 있습니다.
 
 ```cpp
@@ -397,10 +436,224 @@ auto reversed = makeTuple( get<4>(copies), get<3>(copies),
 _Index list_ ( _index sequence_ 라고도 불립니다. Section 24.4, 570 page를 참고하세요)는 이런 생각을 일반화하여, tuple이 가진 index들의 집합을 parameter pack으로 만든 것입니다. 예제의 경우는 -- 4, 3, 2, 1, 0 -- 이 되겠네요. 이렇게 하면 일련의 `get` 함수 호출을 pack expansion을 통해서 생성해낼 수 있죠. 이 접근법은 메타 프로그램에서는 경우에 따라 복잡할 수 있는 index 계산을 분리해낼 수 있도록 해줍니다. C++ 14 표준에 정의된 [`std::integer_sequence`](https://en.cppreference.com/w/cpp/utility/integer_sequence)이 종종 사용됩니다.
 
 ### 3.5 Reversal with Index Lists
-> 추후 보충 예정
+index list를 사용해서 tuple을 뒤집기 위해서, index list를 표현할 방법이 필요합니다. index list는 index로 사용될 수 있는 값으로 구성된 typelist이거나, Section 24.4 page 570에서 다룬 서로 다른 타입으로 구성된 자료구조일 수 있습니다. 여기서는 `Valuelist ` 타입을 사용할 겁니다. (Section 24.3 page 566) 앞서 tuple을 뒤집기 위해 사용된 index list는 이렇게 표현할 수 있겠죠.
+```cpp
+Valuelist<unsigned, 4, 3, 2, 1, 0>
+```
+index list는 어떻게 생성할 수 있을까요? 하나는 `MakeIndexList` 메타프로그램을 사용해서 0 부터 N-1 까지 하나씩 생성하는 것입니다. 여기서 N은 tuple의 길이에 해당하죠.
+
+>
+```
+ function makeIndexList
+    ==  ( N, Result ) -> [ makeIndexList( N-1, [ N-1, Result ] ) ] || 
+        ( 0, Result ) -> [ Result ]
+
+
+ makeIndexList( 0, [] )
+    == []
+ makeIndexList( 1, [] )
+    == makeIndexList( 0, [ 0 ])
+    == [ 0 ]
+ makeIndexList( 2, [] ) 
+    == makeIndexList( 1, [ 1 ] )
+    == makeIndexList( 0, [ 0, 1 ] )
+    == [ 0, 1 ]
+```
+>
+
+```cpp
+// tuples/makeindexlist.hpp
+
+// recursive case
+template <unsigned N, typename Result = ValueList<unsigned>>
+struct MakeIndexListT
+ : MakeIndexListT<N-1, PushFront<Result, CTValue<unsigned, N-1>>>
+{
+};
+
+// basis case
+template <typename Result>
+struct MakeIndexListT<0, Result>
+{
+    using Type = Result;
+};
+
+template <unsigned N>
+using MakeIndexList = typename MakeIndexListT<N>::Type;
+```
+이렇게 하면 typelist `Reverse`를 사용해서 뒤집는 것이 가능합니다.
+
+```cpp
+using MyIndexList = Reverse<MakeIndexList<5>>;
+            // == ValueList<unsigned, 4, 3, 2, 1, 0>
+```
+실제로 역순 재배치를 수행할때는, index list에 있는 index들이 non-type parameter pack으로 사용되어야 합니다. 이 부분은 index 집합인 tuple을 `reverse` 알고리즘으로 뒤집는 것으로 구현할 수 있습니다. 
+
+```cpp
+// tuples/indexlistreverse.hpp
+
+template <typename...Elems, unsigned... Indices>
+auto reverseImpl(Tuple<Elems...> const& t
+                 Valuelist<unsigned, Indices...>)
+{
+    return makeTuple(get<Indices>(t)...);
+}
+
+template <typename... Elems>
+auto reverse(Tuple<Elems...> const& t)
+{
+    return reverseImpl(t,
+                       Reverse<MakeIndexList< sizeof...(Elems) >>() );
+}
+```
+C++ 11 환경에서라면, 반환 타은 아래와 같이 선언되어야 합니다.
+```cpp
+ -> decltype(makeTuple(get<Indices>(t)...))
+```
+다르게는 이렇게 작성할 수 있습니다.
+```cpp
+ -> decltype(reverseImpl(t, Reverse<MakeIndexList< sizeof...(Elems) >>() ))
+```
+
+`reverseImpl()` 함수 템플릿이 `Valuelist`를 템플릿 인자 `Indices`로 받고 있습니다. 그 다음엔 tuple에 `get()`을 사용해서 지정된 index 집합으로 참조하게 되죠. 이들은 `makeTuple()`의 인자가 되어 
+
+`reverse` 알고리즘은 앞서 언급했던 `TupleGet`처럼, 적합한 index list를 생성해 `reverseImpl`에 전달하는 역할을 하고 있습니다. index들은 템플릿 메타프로그램을 사용해서 변경되기 떄문에 실행 시간을 소모하는 코드는 생성되지 않습니다. 유일하게 실행 시간에 수행되는 코드는 `reverseImpl()` 입니다. 이 함수는 `makeTuple()`로 새로운 원소들을 한번만 복사하여 tuple을 생성하기 때문이죠.
 
 ### 3.6 Shuffle and Select
-> 추후 보충 예정
+앞서 본 `reverseImpl()` 함수 템플릿은 `reverse()`연산에서만 사용되는 코드를 가지고 있지 않습니다. 대신, 목적에 맞게 index들을 골라내서 새로운 tuple을 만드는데 사용하죠. 
+
+```cpp
+// tuples/select.hpp
+
+template <typename... Elems, unsigned... Indices>
+auto select(Tuple<Elems,...> const& t,
+            Valuelist<unsigned, Indices...>)
+{
+    return makeTuple<get<Indices>(t)...>();
+}
+```
+`select()`에서 생각할 수 있는 간단한 알고리즘 중 하나는 "splat" 연산입니다. tuple의 한 원소를 골라 복제해 새로운 tuple을 생성하는 것이죠. 
+
+```cpp
+Tuple<int, double, std::string> t1( 42, 7.7, "hello" );
+auto a = splat<1, 4>(t);
+std::cout << a << '\n';
+```
+위 코드에선 `get<1>(t)`을 사용해 `Tuple<double, double, double, double>`을 생성해냅니다. 그 결과로, 이렇게 출력될 것입니다.
+
+```console
+ ( 7.7, 7.7, 7.7, 7.7 )
+```
+"복제된" index를 생성해내는 `splat()`은 `select()`을 그대로 활용한 것이라 할 수 있습니다.
+
+```cpp
+// tuples/splat.hpp
+
+template <unsigned I, unsigned N, typename IndexList = Valuelist<unsigned>>
+class ReplicatedIndexListT;
+
+template <unsigned I, unsigned N, typename... Indices>
+class ReplicatedIndexListT<I, N, Valuelist<unsigned, Indices...>>
+    : public ReplicatedIndexListT<I, N-1,
+                                  Valuelist<unsigned, Indices..., I>>
+{
+};
+
+template <unsigned I, unsigned... Indices>
+class ReplicatedIndexListT<I, 0, Valuelist<unsigned, Indices...>>
+{
+  public:
+    using Type = Valuelist<unsigned, Indices...>;
+};
+
+template <unsigned I, unsigned N>
+using RelicatedIndexList = typename ReplicatedIndexListT<I, N>::Type;
+
+template <unsigned I, unsigned N, typename... Elems>
+auto splat(Tuple<Elems...> const& t)
+{
+    return select(t, ReplicatedIndexList<I,N>());
+}
+```
+`select()`를 통해 index list를 생성해 사용하는 템플릿 메타프로그램이라면 복잡한 tuple 알고리즘도 구현할 수 있습니다. Section 24.2.7 page 563에서 구현했던 삽입 정렬을 만들어볼 수도 있을 겁니다. 원소들의 크기를 받아서 비교를 수행하는 템플릿 메타함수를 사용한 `sort()` 함수같은걸 말입니다. 
+
+```cpp
+// tuples/tuplesorttest.hpp
+#include <complex>
+
+template <typename T, typename U>
+class SmallerThanT
+{
+  public:
+    static constexpr bool value = sizeof(T) < sizeof(U);
+};
+
+void testTupleSort()
+{
+    auto t1 = makeTuple(17LL, std::complex<double>(42.77), 'c', 42, 7.7);
+    std::cout << t1 << '\n';
+
+    auto t2 = sort<SmallerThanT>(t1);
+    std::cout << "sorted by size: " << t2 << '\n';
+}
+```
+결과는 다음과 같습니다.
+```console
+(17, (42,77), c, 42, 7.7)
+sorted by size: (c, 42, 7.7, 17, (42,77))
+```
+실제 `sort()`구현은 `select()`와 `InsertionSort`를 사용한 것입니다.
+
+```cpp
+// tuples/tuplesort.hpp
+
+// meta function wrapper that compares the elements in a tuple
+template <typename List, template<typename T, typename U> class F>
+class MetafunOfNthElementT
+{
+  public:
+    template <typename T, typename U> class Apply;
+
+    template <unsigned N, unsigned M>
+    class Apply<CTValue<unsigned, M>, CTValue<unsigned M>>
+        : public F<NthElement<List, M>, NthElement<List, N>> {};
+};
+
+// sort a tuple based on comparing the element types:
+template <template<typename T, typename U> class Compare,
+          typename... Elems>
+auto sort(Tuple<Elems...> const& t)
+{
+    return select(t,
+        InsertionSort< MakeIndexList<sizeof...(Elems)> ,
+                       MetafunOfNthElementT<
+                            Tuple<Elems...>,
+                            Compare>::template Apply>());
+}
+```
+`InsertionSort`의 사용을 주의깊게 보시기 바랍니다: 실제 index list는 `MakeIndexList`를 통해 typelist로 생성됩니다.따라서, `InsetionSort`의 결과는 tuple에서 사용되는 index의 목록이 됩니다. 이는 바로 `select()`로 전달됩니다. 하지만 `InsertionSort`는 index에 대해서 수행되기 때문에, 그대로 두면 index 두개를 비교하게 될 것입니다. 메타프로그램이 아닌 경우의 예를 들자면 아래와 같은 상황인 것이죠.
+
+```cpp
+// tuples/indexsort.hpp
+#include <vector>
+#include <algorithm>
+#include <string>
+
+int main()
+{
+    std::vector<std::string> strings = { "banana", "apple", "cherry" };
+    std::vector<unsigned> indices = { 0, 1, 2 };
+    std::sort(indices.begin(), indices.end(), 
+              [&strings](unsigned i, unsigned j){
+                  return strings[i] < strings[j];
+              });
+}
+```  
+여기서, `indices`는 `strings` 벡터의 index들을 의미합니다. `sort()` 연산은 index들을 정렬하죠. 대신, 람다 함수의 내부에서는 `strings` 벡터의 값을 비교합니다. 결과적으로 정렬순서는 `strings`에 따라서 수행되는 것이죠. `sort()`를 마치면, 어떤 순서로 정렬해야 하는지를 알려주는 index들을 얻을 수 있을 것입니다.
+
+tuple `sort()`에서 사용한 `InsertionSort`도 이같은 접근법을 사용한 것입니다. `MetafunOfNthElementT` 템플릿은 `Apply`라는 템플릿 메타 함수를 제공하고, 특수화된 `CTValue`를 받아 해당 위치에 있는 원소들을 `NthElement`로 획득합니다. 비유하자면, `Apply` 멤버 함수가 자신을 내포한 템플릿 `MetafunOfNthElement`에 제공된 typelist를 참조(capture)한 것이죠. `Apply`는 그 후에 상속받은 메타함수 `F`를 사용합니다.
+
+정렬을 위한 모든 계산은 컴파일 시간에 수행되고, 정렬의 결과로 생성된 tuple은 불필요한 복사를 수행하지 않습니다.
 
 ## 4 Expanding Tuples
 > Tuple 확장
@@ -447,8 +700,10 @@ C++17에서는 tuple과 같은 타입에 대해서 동작하는 유사한 함수
 
 ### 5.1 Tuples and the EBCO
 > EBCO: Empty Base Class Optimization
+> 추후 보충 예정
 
 ### 5.2 Constant-time `get()`
+> 추후 보충 예정
 
 ## 6 Tuple Subscript
 > Tuple과 아래 첨자
