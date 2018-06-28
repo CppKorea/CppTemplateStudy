@@ -86,18 +86,16 @@ using PopFront = typename PopFrontT<List>::Type;
     FINDERS
 ----------------------------------------------------------- */
 // TYPE TO INDEX
-template <typename List, typename T, size_t N>
+template <typename List, typename T, size_t N = 0>
 struct FindIndexOfT
-    : public IfThenElseT<std::is_same<Front<List>, T>::value,
-                         std::integral_constant<size_t, N>,
-                         FindIndexOfT<PopFront<List>, T, N+1>>
+    : public IfThenElse<std::is_same<Front<List>, T>::value,
+                        std::integral_constant<size_t, N>,
+                        FindIndexOfT<PopFront<List>, T, N+1>>
 {
 };
 
-template <typename List, typename T>
-using FindIndexOf = typename FindIndexOfT<List, T, 0>::Type;
 
-// INDEX TO TYPE
+
 
 /* ===========================================================
     VARIANT
@@ -116,19 +114,19 @@ union VariantStorage<Head, Tail...>
 public:
     Head head_;
     VariantStorage<Tail...> tail_;
-    
+
 public:
     VariantStorage() {};
     VariantStorage(const Head &head)
         : head_(head) {};
-    
+
     template <typename T>
     VariantStorage(const T &val)
         : tail_(val) {};
 };
 
 template<>
-union VariantStorage<> 
+union VariantStorage<>
 {
 };
 
@@ -141,7 +139,7 @@ struct VariantGetter
     template <typename Data>
     static auto apply(const Data &obj)
     {
-        return VariantGetter<index-1>::apply(obj.tail_);
+        return VariantGetter<index - 1>::apply(obj.tail_);
     };
 };
 
@@ -155,12 +153,6 @@ struct VariantGetter<0>
     };
 };
 
-template <typename Index, typename Container>
-auto get(const Container &container)
-{
-	return container.get<Index>();
-}
-
 /* -----------------------------------------------------------
     FINAL CLASS
 ----------------------------------------------------------- */
@@ -170,34 +162,68 @@ class Variant
 private:
     VariantStorage<Types...> data_;
     size_t index_;
-    
+
+    template <typename T>
+    constexpr size_t _Find_index() const
+    {
+        return FindIndexOfT<Typelist<Types...>, T>::value;
+    };
+
 public:
-	//----
+    //----
     // CONSTRUCTORS
-	//----
-    Variant() 
-        : index_(-1) {};
-    
+    //----
+    Variant()
+        : index_(0) {};
+
     template <typename T>
     Variant(const T &val)
-        : data_(val)
+        : data_(val), 
+        index_(_Find_index<T>())
     {
     };
 
-	//----
-	// ACCESSORS
-	//----
-	template <size_t index>
-	auto get()
-	{
-		return VariantGetter<index>::apply(this->data_);
-	}
+    //----
+    // ACCESSORS
+    //----
+    template <typename T>
+    bool is() const
+    {
+        return _Find_index<T>() == index_;
+    };
+    
+    template <typename T>
+    auto get()
+    {
+        constexpr size_t N = _Find_index<T>();
+        return VariantGetter<N>::apply(data_);
+    };
+
+    template <size_t N>
+    auto get()
+    {
+        return VariantGetter<N>::apply(data_);
+    };
 };
 
+
+
+/* ===========================================================
+    MAIN FUNCTION
+=========================================================== */
 int main()
 {
-    Variant<char, int, double> s(3.0);
-    std::cout << s.get<2>() << std::endl;
-     
+    Variant<char, short, int, long long> var(3);
+    {
+        std::cout << "is char: " << var.is<char>() << std::endl;
+        std::cout << "is short: " << var.is<short>() << std::endl;
+        std::cout << "is int: " << var.is<int>() << std::endl;
+        std::cout << "is int64: " << var.is<long long>() << std::endl;
+
+        std::cout << "--------------------------------" << std::endl;
+        std::cout << "value (int): " << var.get<int>() << std::endl;
+    }
+
+    system("pause");
     return 0;
 }
