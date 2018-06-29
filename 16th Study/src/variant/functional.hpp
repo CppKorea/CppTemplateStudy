@@ -66,6 +66,22 @@ struct TypeAt<TypeList<Head, Tail...>, index>
     using Result = typename TypeAt<TypeList<Tail...>, index - 1>::Result;
 };
 
+//----
+// EMPTY
+//----
+template<typename List>
+class IsEmpty
+{
+public:
+    static constexpr bool value = false;
+};
+
+template<>
+class IsEmpty<TypeList<>> {
+public:
+    static constexpr bool value = true;
+};
+
 /* -----------------------------------------------------------
     MODIFIERS
 ----------------------------------------------------------- */

@@ -19,3 +19,4 @@ struct VariantGetter<0>
         return obj.head_;
     };
 };
+

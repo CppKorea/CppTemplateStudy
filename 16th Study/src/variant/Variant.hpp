@@ -4,6 +4,10 @@
 #include "VariantGetter.hpp"
 
 #include "functional.hpp"
+#include <exception>
+
+#include <iostream>
+#include <typeinfo>
 
 template <typename ...Types>
 class Variant
@@ -22,7 +26,7 @@ public:
     template <typename T>
     Variant(const T &val)
         : data_(val), 
-        index_(FindIndexOfT<Typelist<Types...>, T>::value)
+        index_(FindIndexOfT<TypeList<Types...>, T>::value)
     {
     };
 
@@ -32,14 +36,14 @@ public:
     template <typename T>
     bool is() const
     {
-		constexpr size_t N = FindIndexOfT<Typelist<Types...>, T>::value;
+		constexpr size_t N = FindIndexOfT<TypeList<Types...>, T>::value;
         return N == index_;
     };
     
     template <typename T>
     auto get()
     {
-        constexpr size_t N = FindIndexOfT<Typelist<Types...>, T>::value;
+        constexpr size_t N = FindIndexOfT<TypeList<Types...>, T>::value;
         return get<N>();
     };
 
@@ -47,5 +51,24 @@ public:
     auto get()
     {
         return VariantGetter<N>::apply(data_);
+    };
+
+    template <typename Func>
+    void visit(Func &&func) const
+    {
+        if (index_ == -1)
+            throw std::invalid_argument("value is not assigned.");
+
+        _Visit<Func, Types...>(&func);
+    };
+
+private:
+    template <typename Func, typename Head, typename ...Tail>
+    void _Visit(Func *func) const
+    {
+        if (is<Head>())
+            (*func)(get<Head>());
+        else if constexpr (sizeof...(Tail) > 0)
+            _Visit<Func, Tail...>(func);
     };
 };
