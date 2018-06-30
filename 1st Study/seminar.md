@@ -265,6 +265,26 @@ std::decay<const int&&>::type; // int
 
 ### 2.3. Overloading Function Templates
 ```cpp
+template<>
+short max(short x, short y)
+{
+    return (x + (~y + 1) >> 15 == 0) ? x : y;
+};
+
+template<>
+int max(int x, int y)
+{
+    return (x + (~y + 1) >> 31 == 0) ? x : y;
+};
+
+template <typename X, typename Y, typename Z>
+auto max(X x, Y y, Z z)
+{
+    return max(x, max(y, z));
+};
+```
+
+```cpp
 namespace mystl
 {
     template <typename T>
