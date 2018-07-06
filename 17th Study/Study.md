@@ -23,7 +23,7 @@ void middle(typename T::Index p)
     core(p);
 }
 
-template<typename T>
+template <typename T>
 void shell(T const& env)
 {
     typename T::Index i;
@@ -543,3 +543,7 @@ up to 11 tracers at the same time (10 before)
 ```
 
 ## 28.5 Oracles
+
+트레이서는 비교적 간단하고 효과적이지만 특정 입력 데이터와 관련 기능의 특정 동작만 추적할 수 있습니다. 예를 들어 정렬 알고리즘에서 비교 연산자를 통해 충족되는 조건이 무엇인지를 파악하는게 맞지만 예제에서는 정수에서 '보다 작다'에 해당하는 비교 연산자만 테스트했습니다.
+
+오라클(런타임 분석 오라클)은 트레이서를 확장한 것입니다. 오라클은 추론 엔진에 연결되어 있는 트레이서입니다. 즉, 특정 결론을 추론할 수 있는 주장 및 이유를 기억할 수 있는 프로그램입니다.
