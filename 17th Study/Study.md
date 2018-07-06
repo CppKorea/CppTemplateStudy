@@ -215,9 +215,9 @@ int main()
 
 ## 28.2 Static Assertions
 
-assert() 매크로를 사용하면 런타임에 특정 조건을 검사할 수 있습니다. 이 때 검사가 실패하면 프로그램이 멈추게 되고 프로그래머는 원인을 분석해 문제를 해결할 수 있습니다.
+assert() 매크로를 사용하면 런타임에 특정 조건을 테스트할 수 있습니다. 이 때 테스트가 실패하면 프로그램이 멈추게 되고 프로그래머는 원인을 분석해 문제를 해결할 수 있습니다.
 
-C++11에 도입된 static_assert 키워드도 같은 동작을 합니다. 다만 차이가 있다면 런타임이 아닌 컴파일 타임에 검사합니다. 검사가 실패하면 컴파일러는 오류 메시지를 출력합니다. 이 때 무엇이 잘못되었는지를 나타내는 출력 메시지를 포함할 수 있습니다.
+C++11에 도입된 static_assert 키워드도 같은 동작을 합니다. 다만 차이가 있다면 런타임이 아닌 컴파일 타임에 테스트합니다. 테스트가 실패하면 컴파일러는 오류 메시지를 출력합니다. 이 때 무엇이 잘못되었는지를 나타내는 출력 메시지를 포함할 수 있습니다.
 
 ```C++
 static_assert(sizeof(void*) * CHAR_BIT == 64, "Not a 64-bit platform");
@@ -297,9 +297,9 @@ int find(T const* array, int n, T const& value)
 }
 ```
 
-이 템플릿 정의는 두 가지 문제가 있습니다. 두 문제 모두 기술적으로는 템플릿의 요구 사항을 충족하지만 예상한 것과 약간 다르게 동작하는 특정 템플릿 인수가 주어지면 컴파일 오류가 발생합니다. 이 때 원형(Archetype)의 개념을 사용하면 find() 템플릿에 지정된 요구 사항에 충족하는 템플릿 매개 변수의 실제 동작을 검사합니다.
+이 템플릿 정의는 두 가지 문제가 있습니다. 두 문제 모두 기술적으로는 템플릿의 요구 사항을 충족하지만 예상한 것과 약간 다르게 동작하는 특정 템플릿 인수가 주어지면 컴파일 오류가 발생합니다. 이 때 원형(Archetype)의 개념을 사용하면 find() 템플릿에 지정된 요구 사항에 충족하는 템플릿 매개 변수의 실제 동작을 테스트합니다.
 
-원형은 사용자 정의 클래스를 템플릿 인수로 사용할 경우 해당 템플릿 매개 변수의 제약 조건을 준수하는지 검사합니다. 원형은 가능한 최소한의 방법으로 템플릿의 요구 사항을 충족시키도록 특별히 제작되었습니다. 원형을 템플릿 인수로 사용해 템플릿 정의를 인스턴스화하면 템플릿 정의가 명시적으로 필요하지 않은 작업을 사용하지 않는다는 사실을 알 수 있습니다.
+원형은 사용자 정의 클래스를 템플릿 인수로 사용할 경우 해당 템플릿 매개 변수의 제약 조건을 준수하는지 테스트합니다. 원형은 가능한 최소한의 방법으로 템플릿의 요구 사항을 충족시키도록 특별히 제작되었습니다. 원형을 템플릿 인수로 사용해 템플릿 정의를 인스턴스화하면 템플릿 정의가 명시적으로 필요하지 않은 작업을 사용하지 않는다는 사실을 알 수 있습니다.
 
 예를 들어 find() 알고리즘의 문서에 설명된 EqualityComparable의 요구 사항을 충족시키기 위한 원형은 다음과 같습니다.
 
@@ -322,7 +322,7 @@ ConvertibleToBoolArchetype operator==(
 
 EqualityComparableArchetype에는 멤버 함수나 데이터가 없습니다. 오직 find()에서 필요한 요구 사항을 충족하기 위해 오버로드된 operator==만 제공합니다. 한편 operator==는 다른 원형인 ConvertibleToBoolArchetype을 반환하는데, 여기에는 사용자 정의 bool 타입 변환 연산만 정의되어 있습니다.
 
-EqualityComparableArchetype은 템플릿 함수 find()에 명시된 요구 사항을 충족합니다. 따라서 EqualityComparableArchetype을 사용해 find() 함수를 인스턴스화했을 때 예상한 대로 동작하는지 검사할 수 있습니다.
+EqualityComparableArchetype은 템플릿 함수 find()에 명시된 요구 사항을 충족합니다. 따라서 EqualityComparableArchetype을 사용해 find() 함수를 인스턴스화했을 때 예상한 대로 동작하는지 테스트할 수 있습니다.
 
 ```C++
 template int find(EqualityComparableArchetype const*, int,
@@ -355,7 +355,191 @@ public:
 };
 ```
 
-= delete를 사용해 && 및 || 연산자를 오염시켜 원형을 더 확장할 수 있습니다. 이는 다른 템플릿 정의에서 문제를 찾는 데 도움이됩니다. 일반적으로 템플릿을 구현하는 사람은 템플릿 라이브러리에서 식별된 모든 컨셉에 대한 원형을 개발한 다음 이 원형을 사용해 명시된 요구 사항에 따라 각 템플릿 정의를 검사합니다.
+= delete를 사용해 && 및 || 연산자를 오염시켜 원형을 더 확장할 수 있습니다. 이는 다른 템플릿 정의에서 문제를 찾는 데 도움이됩니다. 일반적으로 템플릿을 구현하는 사람은 템플릿 라이브러리에서 식별된 모든 컨셉에 대한 원형을 개발한 다음 이 원형을 사용해 명시된 요구 사항에 따라 각 템플릿 정의를 테스트합니다.
 
 ## 28.4 Tracers
 
+템플릿을 사용하는 프로그램을 컴파일하거나 링크할 때 발생하는 버그는 비교적 발견하고 고치기 쉽습니다. 하지만 빌드를 성공한 뒤 런타임에 발생하는 버그는 찾기 쉽지 않습니다. 템플릿은 코드의 동작이 해당 템플릿의 클라이언트(고유한 클래스 및 함수보다 훨씬 더 많음)에 따라 달라지기 때문에 찾기 더 어렵습니다. 트레이서(Tracer)는 개발 초기에 템플릿 정의의 문제를 감지해 디버깅하는데 겪는 어려움을 완화시켜주는 소프트웨어 장치입니다.
+
+트레이서는 사용자 정의 클래스로서 테스트할 템플릿의 인수로 사용할 수 있습니다. 트레이서에서는 프로그램의 연산을 추적하는 것이 중요합니다. 프로그램의 연산을 추적할 수 있다면 알고리즘의 효율성과 작업 순서를 실험적으로 검증할 수 있습니다.
+
+다음은 정렬 알고리즘을 테스트하는데 사용하는 트레이서 예제입니다.
+
+```C++
+#include <iostream>
+
+class SortTracer
+{
+private:
+    int value; // integer value to be sorted
+    int generation; // generation of this tracer
+    inline static long n_created = 0; // number of constructor calls
+    inline static long n_destroyed = 0; // number of destructor calls
+    inline static long n_assigned = 0; // number of assignments
+    inline static long n_compared = 0; // number of comparisons
+    inline static long n_max_live = 0; // maximum of existing objects
+
+    // recompute maximum of existing objects
+    static void update_max_live()
+    {
+        if (n_created-n_destroyed > n_max_live)
+        {
+            n_max_live = n_created-n_destroyed;
+        }
+    }
+
+public:
+    static long creations()
+    {
+        return n_created;
+    }
+
+    static long destructions()
+    {
+        return n_destroyed;
+    }
+
+    static long assignments()
+    {
+        return n_assigned;
+    }
+
+    static long comparisons()
+    {
+        return n_compared;
+    }
+
+    static long max_live()
+    {
+        return n_max_live;
+    }
+
+public:
+    // constructor
+    SortTracer (int v = 0) : value(v), generation(1)
+    {
+        ++n_created;
+        update_max_live();
+        std::cerr << "SortTracer #" << n_created
+            << ", created generation " << generation
+            << " (total: " << n_created - n_destroyed
+            << ")\n";
+    }
+
+    // copy constructor
+    SortTracer (SortTracer const& b) : value(b.value), generation(b.generation+1)
+    {
+        ++n_created;
+        update_max_live();
+        std::cerr << "SortTracer #" << n_created
+            << ", copied as generation " << generation
+            << " (total: " << n_created - n_destroyed
+            << ")\n";
+    }
+
+    // destructor
+    ~SortTracer()
+    {
+        ++n_destroyed;
+        update_max_live();
+        std::cerr << "SortTracer generation " << generation
+            << " destroyed (total: "
+            << n_created - n_destroyed << ")\n";
+    }
+
+    // assignment
+    SortTracer& operator= (SortTracer const& b)
+    {
+        ++n_assigned;
+        std::cerr << "SortTracer assignment #" << n_assigned
+            << " (generation " << generation
+            << " = " << b.generation
+            << ")\n";
+        value = b.value;
+        return *this;
+    }
+
+    // comparison
+    friend bool operator < (SortTracer const& a, SortTracer const& b)
+    {
+        ++n_compared;
+        std::cerr << "SortTracer comparison #" << n_compared
+            << " (generation " << a.generation
+            << " < " << b.generation
+            << ")\n";
+        return a.value < b.value;
+    }
+
+    int val() const
+    {
+        return value;
+    }
+};
+```
+
+트레이서는 정렬할 값, value 외에도 실제 정렬을 추적하는데 도움이 되는 여러 멤버를 제공합니다. generation은 각 개체에 대해 원본에서 얼마나 많이 복사되었는지를 추적합니다. 즉, 원본은 generation이 1, 원본의 복사본은 generation이 2, 원본의 복사본의 복사본은 generation이 3입니다. 다른 정적 멤버는 생성 (생성자 호출), 파괴, 대입 연산자 및 존재했던 개체의 최대 개수를 추적합니다.
+
+이 트레이서를 사용하면 주어진 템플릿에 통해 수행한 할당 및 비교 뿐만 아니라 엔티티 생성 및 파괴 패턴을 추적할 수 있습니다. 다음 테스트 프로그램은 C++ 표준 라이브러리의 std::sort() 알고리즘을 추적합니다.
+
+```C++
+#include <iostream>
+#include <algorithm>
+#include "tracer.hpp"
+
+int main()
+{
+    // prepare sample input:
+    SortTracer input[] = { 7, 3, 5, 6, 4, 2, 0, 1, 9, 8 };
+
+    // print initial values:
+    for (int i = 0; i < 10; ++i)
+    {
+        std::cerr << input[i].val() << ’ ’;
+    }
+    std::cerr << ’\n’;
+
+    // remember initial conditions:
+    long created_at_start = SortTracer::creations();
+    long max_live_at_start = SortTracer::max_live();
+    long assigned_at_start = SortTracer::assignments();
+    long compared_at_start = SortTracer::comparisons();
+    
+    // execute algorithm:
+    std::cerr << "---[ Start std::sort() ]--------------------\n";
+    std::sort<>(&input[0], &input[9] + 1);
+    std::cerr << "---[ End std::sort() ]----------------------\n";
+    
+    // verify result:
+    for (int i = 0; i < 10; ++i)
+    {
+        std::cerr << input[i].val() << ’ ’;
+    }
+    std::cerr << "\n\n";
+
+    // final report:
+    std::cerr << "std::sort() of 10 SortTracer’s"
+        << " was performed by:\n "
+        << SortTracer::creations() - created_at_start
+        << " temporary tracers\n "
+        << "up to "
+        << SortTracer::max_live()
+        << " tracers at the same time ("
+        << max_live_at_start << " before)\n "
+        << SortTracer::assignments() - assigned_at_start
+        << " assignments\n "
+        << SortTracer::comparisons() - compared_at_start
+        << " comparisons\n\n";
+}
+```
+
+위 코드를 실행한 결과는 다음과 같습니다.
+
+```C++
+std::sort() of 10 SortTracer’s was performed by:
+9 temporary tracers
+up to 11 tracers at the same time (10 before)
+33 assignments
+27 comparisons
+```
+
+## 28.5 Oracles
