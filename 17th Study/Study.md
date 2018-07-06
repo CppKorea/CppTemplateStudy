@@ -226,5 +226,49 @@ static_assert(sizeof(void*) * CHAR_BIT == 64, "Not a 64-bit platform");
 정적 단언문을 사용하면 템플릿 인자가 템플릿의 제약 조건을 만족하지 않을 경우 유용한 오류 메시지를 출력할 수 있습니다. 예를 들어 주어진 타입이 역참조할 수 있는지를 확인하는 타입 특성을 만든다고 합시다.
 
 ```C++
+#include <utility>      // for declval()
+#include <type_traits>  // for true_type and false_type
 
+template <typename T>
+class HasDereference
+{
+private:
+    template<typename U> struct Identity;
+    template<typename U> static std::true_type
+        test(Identity<decltype(*std::declval<U>())>*);
+    template<typename U> static std::false_type
+        test(…);
+        
+public:
+    static constexpr bool value = decltype(test<T>
+    (nullptr))::value;
+};
 ```
+
+이제 정적 분석을 사용하면 shell() 함수에서 역참조 할 수 없는 타입으로 인스턴스화 할 경우 좀 더 명확한 오류 메시지를 출력합니다.
+
+```C++
+template<typename T>
+void shell(T const& env)
+{
+    static_assert(HasDereference<T>::value, "T is not dereferenceable");
+    
+    typename T::Index i;
+    middle(i);
+}
+```
+
+정적 분석은 클래스 템플릿에도 적용할 수 있고 모든 타입 특성을 사용할 수 있습니다.
+
+```C++
+template <typename T>
+class C
+{
+    static_assert(HasDereference<T>::value, "T is not dereferenceable");
+    static_assert(std::is_default_constructible<T>::value, "T is not default constructible");
+    ...
+};
+```
+
+## 28.3 Archetypes
+
