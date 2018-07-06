@@ -8,7 +8,7 @@
 template <typename T>
 void clear(T& p)
 {
-     *p = 0; // assumes T is a pointer-like type
+    *p = 0; // assumes T is a pointer-like type
 }
 
 template <typename T>
@@ -271,4 +271,76 @@ class C
 ```
 
 ## 28.3 Archetypes
+
+템플릿을 작성할 때 템플릿 인수가 해당 템플릿에 지정된 제약 조건을 충족하는 경우에만 템플릿 정의를 컴파일하도록 구현하는게 좋습니다.
+
+예를 들어 배열에서 특정 값을 찾는 find() 함수를 고려해 봅시다.
+
+```C++
+// T must be EqualityComparable, meaning:
+// two objects of type T can be compared with == and
+// the result converted to bool
+template <typename T>
+int find(T const* array, int n, T const& value);
+```
+
+이 함수를 간단하게 구현해 봅시다.
+
+```C++
+template <typename T>
+int find(T const* array, int n, T const& value)
+{
+    int i = 0;
+    while (i != n && array[i] != value)
+        ++i;
+    return i;
+}
+```
+
+이 템플릿 정의는 기술적으로는 템플릿의 요구 사항을 충족하지만 예상한 것과 약간 다르게 동작하는 특정 템플릿 인수가 주어지면 컴파일 오류가 발생한다는 문제가 있습니다. 이 때 원형(Archetype)의 개념을 사용하면 find() 템플릿에 지정된 요구 사항에 충족하는 템플릿 매개 변수의 실제 동작을 검사합니다.
+
+원형은 사용자 정의 클래스를 템플릿 인수로 사용할 경우 해당 템플릿 매개 변수의 제약 조건을 준수하는지 검사합니다. 원형은 가능한 최소한의 방법으로 템플릿의 요구 사항을 충족시키도록 특별히 제작되었습니다. 원형을 템플릿 인수로 사용해 템플릿 정의를 인스턴스화하면 템플릿 정의가 명시적으로 필요하지 않은 작업을 사용하지 않는다는 사실을 알 수 있습니다.
+
+예를 들어 find() 알고리즘의 문서에 설명된 EqualityComparable의 요구 사항을 충족시키기 위한 원형은 다음과 같습니다.
+
+```C++
+class EqualityComparableArchetype
+{
+
+};
+
+class ConvertibleToBoolArchetype
+{
+public:
+    operator bool() const;
+};
+
+ConvertibleToBoolArchetype operator==(
+    EqualityComparableArchetype const&,
+    EqualityComparableArchetype const&);
+```
+
+EqualityComparableArchetype에는 멤버 함수나 데이터가 없습니다. 오직 find()에서 필요한 요구 사항을 충족하기 위해 오버로드된 operator==만 제공합니다. 한편 operator==는 다른 원형인 ConvertibleToBoolArchetype을 반환하는데, 여기에는 사용자 정의 bool 타입 변환 연산만 정의되어 있습니다.
+
+EqualityComparableArchetype은 템플릿 함수 find()에 명시된 요구 사항을 충족합니다. 따라서 EqualityComparableArchetype을 사용해 find() 함수를 인스턴스화했을 때 예상한 대로 동작하는지 검사할 수 있습니다.
+
+```C++
+template int find(EqualityComparableArchetype const*, int,
+                  EqualityComparableArchetype const&);
+```
+
+하지만 컴파일하면 find<EqualityComparableArchetype>의 인스턴스화가 실패했다는 오류가 발생할 것입니다. 그 이유는 EqualityComparable에는 ==만 필요하지만 find()의 구현 코드에서 T 객체를 !=로 비교하기 때문입니다. 우리가 구현한 코드는 ==와 !=을 쌍으로 구현하는 대부분의 사용자 정의 타입에서 작동했지만 실제로는 그렇지 않았습니다. 원형은 템플릿 라이브러리 개발 초기에 이러한 문제를 발견하는데 많은 도움을 줍니다.
+
+find() 함수에서 != 대신 ==을 사용하도록 변경하면 성공적으로 컴파일됩니다.
+
+```C++
+template <typename T>
+int find(T const* array, int n, T const& value)
+{
+    int i = 0;
+    while (i != n && !(array[i] == value))
+        ++i;
+    return i;
+}
+```
 
